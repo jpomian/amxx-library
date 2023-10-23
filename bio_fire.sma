@@ -109,7 +109,7 @@
 =================================================================================*/
 
 // Uncomment the following if you wish to set custom models for napalms
-#define USE_NAPALM_CUSTOM_MODELS
+//#define USE_NAPALM_CUSTOM_MODELS
 
 #if defined USE_NAPALM_CUSTOM_MODELS // Then set your custom models here
 new const g_model_napalm_view[] = "models/biohazard/v_podpalacz.mdl"
@@ -259,7 +259,7 @@ public plugin_init()
 	cvar_keepexplosion = register_cvar("napalm_keepexplosion", "0")
 	
 	cvar_duration = register_cvar("napalm_duration", "6")
-	cvar_damage = register_cvar("napalm_damage", "25")
+	cvar_damage = register_cvar("napalm_damage", "15")
 	cvar_cankill = register_cvar("napalm_cankill", "0")
 	cvar_slowdown = register_cvar("napalm_slowdown", "0.6")
 	cvar_screamrate = register_cvar("napalm_screamrate", "20")

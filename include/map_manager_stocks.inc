@@ -39,7 +39,7 @@ stock bool:is_string_with_space(string[])
 stock trim_bracket(text[])
 {
     for(new i; text[i]; i++) {
-        if(text[i] == '[' || text[i] == ' ') {
+        if(text[i] == '[') {
             text[i] = 0;
             break;
         }
@@ -58,8 +58,19 @@ stock get_players_num(ignore = 0)
     }
     new pnum;
     for(new i = 1; i <= maxplayers; i++) {
-        if(ignore && i == ignore || !is_user_connected(i)) 
+        if(ignore > 0 && i == ignore
+            || !is_user_connected(i)
+            || is_user_bot(i)
+            || is_user_hltv(i)) {
             continue;
+        }
+
+        if(ignore == -1) {
+            new team = get_user_team(i);
+            if(team == 0 || team == 3) {
+                continue;
+            }
+        }
 
         pnum++;
     }

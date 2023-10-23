@@ -31,6 +31,11 @@ new g_LastSong[96],
 	g_RandomMusic,
 	g_ShowPlaylist;
 
+new const g_ShowNames[][]={
+	"Brak",
+	"Czat"
+};
+
 new const g_CvarName[][]={
 	"Roundsound_ads_time",
 	"Roundsound_prefix",
@@ -43,7 +48,7 @@ new const g_CvarValue[][]={
 	"120",
 	"RoundSound",
 	"0",
-	"0",
+	"1",
 	"1"
 };
 
@@ -99,16 +104,8 @@ public plugin_cfg(){
 	g_RandomMusic = get_pcvar_num(g_Pcvar[2]);
 	g_ShowPlaylist = get_pcvar_num(g_Pcvar[4]);
 	
-	if(get_pcvar_num(g_Pcvar[0]) >= 30){
-		set_task(get_pcvar_float(g_Pcvar[0]), "ShowAds",.flags = "b");
-	}
-	
 	g_MaxPlayers = get_maxplayers();
 	g_ValueTeam[0] = g_ValueTeam[1] = -1;
-}
-public plugin_natives()
-{
-	register_native("get_lastsong", "ShowLastSong", 1);
 }
 
 public client_authorized(id){
@@ -189,6 +186,9 @@ public ShowRsMenu(id){
 	formatex(g_FormatText, charsmax(g_FormatText), "\rReklamy: \y[\d%s\y]", g_ShowAds[id] ? "ON" : "OFF");
 	menu_additem(g_Menu, g_FormatText);
 	
+	formatex(g_FormatText, charsmax(g_FormatText), "\yWyswietlanie nazwy \rutworu: \y[\d%s\y]", g_ShowNames[ g_ShowInfo[id] ]);
+	menu_additem(g_Menu, g_FormatText);
+	
 	menu_setprop(g_Menu, MPROP_EXITNAME, "Wyjscie");
 	menu_display(id, g_Menu);
 }
@@ -202,7 +202,7 @@ public MenuChoose(id, g_Menu, g_Item){
 	switch(g_Item){
 		case 0:{
 			g_RoundSound[id] = !g_RoundSound[id];
-			ColorChat(id, GREEN, "[%s]^x01 Roundsound:^x03 %s", g_Prefix, g_RoundSound[id] ? "wlaczony" : "wylaczony");
+			ColorChat(id, TEAM_COLOR, "[%s]^x04 Roundsound:^x03 %s", g_Prefix, g_RoundSound[id] ? "wlaczony" : "wylaczony");
 			ShowRsMenu(id);
 		}
 		
@@ -212,7 +212,7 @@ public MenuChoose(id, g_Menu, g_Item){
 		
 		case 3:{
 			g_ShowAds[id] = !g_ShowAds[id];
-			ColorChat(id, GREEN, "[%s]^x01 Reklamy:^x03 %s", g_Prefix, g_ShowAds[id] ? "wlaczone" : "wylaczone");
+			ColorChat(id, TEAM_COLOR, "[%s]^x04 Reklamy:^x03 %s", g_Prefix, g_ShowAds[id] ? "wlaczone" : "wylaczone");
 			ShowRsMenu(id);
 			
 		}
@@ -294,10 +294,10 @@ public PlaylistChoose(id, g_Menu, g_Item){
 
 public ShowLastSong(id){
 	if(g_FirstPlay){
-		ColorChat(id, GREEN, "[ZM]^x01 Gramy:^x03 %s", g_LastSong);
+		ColorChat(id, TEAM_COLOR, "[%s]^x04 Ostatni utwor:^x03 %s", g_Prefix, g_LastSong);
 	}
 	else{
-		ColorChat(id, GREEN, "[ZM]^x01 Nie zostala odegrana zadna^x03 piosenka.");
+		ColorChat(id, TEAM_COLOR, "[%s]^x04 Nie zostala odegrana zadna^x03 piosenka.", g_Prefix);
 	}
 }
 
@@ -387,7 +387,7 @@ public RandMusic(g_Type){
 				switch(g_ShowInfo[i]){
 					case Chat_Msg:{
 						if(g_ShowPlaylist){
-							ColorChat(i, GREEN, "[%s]^x01 %s", g_Prefix, g_SoundName);
+							ColorChat(i, TEAM_COLOR, "[%s]^x04 %s", g_Prefix, g_SoundName);
 						}
 					}
 				}
@@ -407,18 +407,18 @@ public ShowAds(){
 		if(is_user_connected(i) && g_ShowAds[i]){
 			switch(random(4)){
 				case 0:{
-					ColorChat(i, GREEN, "[%s]^x01 Chcesz %s roundsound? Napisz^x03 /roundsound ^x04lub^x03 /rs", g_Prefix, g_RoundSound[i] ? "wylaczyc" : "wlaczyc");
+					ColorChat(i, TEAM_COLOR, "[%s]^x04 Chcesz %s roundsound? Napisz^x03 /roundsound ^x04lub^x03 /rs", g_Prefix, g_RoundSound[i] ? "wylaczyc" : "wlaczyc");
 				}
 				case 1:{
 					if(g_ShowPlaylist){
-						ColorChat(i, GREEN, "[%s]^x01 Podobala Ci sie ostatnia piosenka, a nie pamietasz jej nazwy? Napisz^x03 /last", g_Prefix);
+						ColorChat(i, TEAM_COLOR, "[%s]^x04 Podobala Ci sie ostatnia piosenka, a nie pamietasz jej nazwy? Napisz^x03 /last", g_Prefix);
 					}
 				}
 				case 2:{
-					ColorChat(i, GREEN, "[%s]^x01 Chcesz posluchac utworow CT / TT? Napisz^x03 /roundsound ^x04lub^x03 /rs", g_Prefix);
+					ColorChat(i, TEAM_COLOR, "[%s]^x04 Chcesz posluchac utworow CT / TT? Napisz^x03 /roundsound ^x04lub^x03 /rs", g_Prefix);
 				}
 				case 3:{
-					ColorChat(i, GREEN, "[%s]^x01 Chcesz wylaczyc reklamy? Napisz^x03 /roundsound ^x04lub^x03 /rs", g_Prefix);
+					ColorChat(i, TEAM_COLOR, "[%s]^x04 Chcesz wylaczyc reklamy? Napisz^x03 /roundsound ^x04lub^x03 /rs", g_Prefix);
 				}
 			}
 		}

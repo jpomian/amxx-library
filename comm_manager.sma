@@ -61,10 +61,10 @@ public plugin_init()
 	register_forward(FM_GameShutdown, "GameShutdown");
 	register_forward(FM_ServerDeactivate, "GameShutdown");
 	
-	pHost = register_cvar("mute_sql_host", "145.239.236.240"); 
-	pUser = register_cvar("mute_sql_user", "srv67541"); 
-	pPass = register_cvar("mute_sql_pass", "6hUagoFlgQ");
-	pDatabase = register_cvar("mute_sql_database", "srv67541");
+	pHost = register_cvar("mute_sql_host", "sql.pukawka.pl"); 
+	pUser = register_cvar("mute_sql_user", "898035"); 
+	pPass = register_cvar("mute_sql_pass", "zmKOLOSEUM");
+	pDatabase = register_cvar("mute_sql_database", "898035_cmanager");
 	
 	server_exec();
 	set_task(0.1, "sql_init");
@@ -258,7 +258,7 @@ public say_handle(id)
 		return PLUGIN_CONTINUE;
 	}
 	
-	if(equali(say, "/buy") || equali(say, "/daj") || equali(say, "/achs"))
+	if(equali(say, "/buy") || equali(say, "/menu") || equali(say, "/achs"))
 		return PLUGIN_CONTINUE;
 
 	if(get_user_flags(id) & ADMIN_CHAT && say[0] == '@')
@@ -861,7 +861,7 @@ public voiceadmin_on(id)
 	client_cmd(id, "+voicerecord");
 	bAdminVoice[id] = true;
 	
-	ColorChat(0, GREEN, "[CM]^1 Cisza!^3 Admin^1 przemawia.");
+	ColorChat(0, GREEN, "[!]^1 Cisza!^3 Admin^1 przemawia.");
 	
 	return PLUGIN_HANDLED_MAIN;
 }

@@ -4,7 +4,7 @@
 #include <map_manager>
 
 #define PLUGIN "Map Manager: Effects"
-#define VERSION "0.0.9"
+#define VERSION "0.1.3"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
@@ -27,9 +27,7 @@ enum Cvars {
     FREEZETIME,
     VOTE_IN_NEW_ROUND,
     PREPARE_TIME,
-    VOTE_TIME,
-    CHANGE_TYPE,
-    LAST_ROUND
+    VOTE_TIME
 };
 
 enum {
@@ -44,14 +42,9 @@ new bool:g_bFreezeTimeChanged;
 new bool:g_bFreezeFlagsChanged;
 new HamHook:g_hHamSpawn;
 
-new const g_sSound[][] = {
-    "sound/fvox/one.wav", "sound/fvox/two.wav", "sound/fvox/three.wav", "sound/fvox/four.wav", "sound/fvox/five.wav",
-    "sound/fvox/six.wav", "sound/fvox/seven.wav", "sound/fvox/eight.wav", "sound/fvox/nine.wav", "sound/fvox/ten.wav"
-};
-
 public plugin_init()
 {
-    register_plugin(PLUGIN, VERSION, AUTHOR);
+    register_plugin(PLUGIN, VERSION + VERSION_HASH, AUTHOR);
 
     g_pCvars[BLACK_SCREEN] = register_cvar("mapm_black_screen", "1"); // 0 - disable, 1 - enable
     g_pCvars[BLOCK_CHAT] = register_cvar("mapm_block_chat", "1"); // 0 - disable, 1 - enable
@@ -62,20 +55,17 @@ public plugin_init()
 
     DisableHamForward(g_hHamSpawn = RegisterHam(Ham_Spawn, "player", "player_spawn_post", 1));
 }
+public plugin_precache()
+{
+    register_clcmd("say", "clcmd_say");
+    register_clcmd("say_team", "clcmd_say");
+}
 public plugin_cfg()
 {
-    if(get_num(BLOCK_CHAT)) {
-        register_clcmd("say", "clcmd_say");
-        register_clcmd("say_team", "clcmd_say");
-    }
-    if(get_num(FREEZE_IN_VOTE)) {
-        g_pCvars[FREEZETIME] = get_cvar_pointer("mp_freezetime");
-        g_pCvars[VOTE_IN_NEW_ROUND] = get_cvar_pointer("mapm_vote_in_new_round");
-        g_pCvars[PREPARE_TIME] = get_cvar_pointer("mapm_prepare_time");
-        g_pCvars[VOTE_TIME] = get_cvar_pointer("mapm_vote_time");
-        g_pCvars[CHANGE_TYPE] = get_cvar_pointer("mapm_change_type");
-        g_pCvars[LAST_ROUND] = get_cvar_pointer("mapm_last_round");
-    }
+    g_pCvars[FREEZETIME] = get_cvar_pointer("mp_freezetime");
+    g_pCvars[VOTE_IN_NEW_ROUND] = get_cvar_pointer("mapm_vote_in_new_round");
+    g_pCvars[PREPARE_TIME] = get_cvar_pointer("mapm_prepare_time");
+    g_pCvars[VOTE_TIME] = get_cvar_pointer("mapm_vote_time");
 }
 public plugin_end()
 {
@@ -93,7 +83,7 @@ public clcmd_say(id)
 }
 public player_spawn_post(id)
 {
-    if(get_num(FREEZE_IN_VOTE) == FREEZE_FORCE_USE_FLAGS || get_num(FREEZE_IN_VOTE) && !get_num(VOTE_IN_NEW_ROUND)) {
+    if(g_bFreezeFlagsChanged) {
         set_pev(id, pev_flags, pev(id, pev_flags) | FL_FROZEN);
     }
     if(get_num(BLACK_SCREEN)) {
@@ -105,14 +95,10 @@ public mapm_countdown(type, time)
     if(type == COUNTDOWN_PREPARE) {
         // hud timer
         new players[32], pnum; get_players(players, pnum, "ch");
-        set_dhudmessage(random_num(128, 254), random_num(128, 254), random_num(128, 254), -1.0, 0.05, 0, 0.0, 1.0, 0.0, 0.0);
+        set_dhudmessage(218, 165, 32, -1.0, -1.0, 0, 0.0, 1.0, 0.0, 0.0);
         for(new i, id; i < pnum; i++) {
             id = players[i];
             show_dhudmessage(id, "%L %L!", id, "MAPM_HUD_TIMER", time, id, "MAPM_SECONDS");
-        }
-        // sound
-        if( 0 < time <= 10 ) {
-            send_audio(0, g_sSound[time - 1], PITCH_NORM);
         }
     }
 }
@@ -141,10 +127,6 @@ public mapm_prepare_votelist(type)
         }
     }
     EnableHamForward(g_hHamSpawn);
-}
-public mapm_vote_started(type)
-{
-    send_audio(0, "sound/Gman/Gman_Choose1.wav", PITCH_NORM);
 }
 public mapm_vote_finished(const map[], type, total_votes)
 {

@@ -1,5 +1,5 @@
 #include <amxmodx>
-#include <cromchat>
+#include <colorchat>
 #include <cstrike>
 #include <hamsandwich>
 
@@ -9,6 +9,8 @@ enum _:Cvars
 {
 	gospec_respawn
 }
+
+static const spPrefix[] = "[DeathMatch]"
 
 new g_eCvars[Cvars]
 
@@ -24,7 +26,6 @@ public plugin_init()
 	register_clcmd("say /back", "GoBack")
 	
 	g_eCvars[gospec_respawn] = register_cvar("gospec_respawn", "0")
-	CC_SetPrefix("[&x03Bio]")
 }
 
 public GoSpec(id)
@@ -34,18 +35,18 @@ public GoSpec(id)
 		new CsTeams:iTeam = cs_get_user_team(id)
 
 		if(iTeam == CS_TEAM_SPECTATOR)
-			CC_SendMessage(id, "%L", id, "GOSPEC_ALREADY_SPECTATOR")
+			ColorChat(id, GREEN, "%s ^x01Jestes juz widzem.", spPrefix)
 		else
 		{
 			g_iOldTeam[id] = iTeam
 			cs_set_user_team(id, CS_TEAM_SPECTATOR)
-			CC_SendMessage(id, "%L", id, "GOSPEC_NOW_SPECTATOR")
+			ColorChat(id, GREEN, "%s ^x01Przeniesiono do trybun.", spPrefix)
 
 			if(is_user_alive(id))
 				user_silentkill(id)
 		}
 	} else
-		CC_SendMessage(id, "Musisz byc martwy, aby przejsc na spekta.", id)
+		ColorChat(id, GREEN, "%s ^x01Musisz byc martwy, aby przejsc na spekta.", spPrefix)
 
 	return PLUGIN_HANDLED
 }
@@ -54,7 +55,7 @@ public GoBack(id)
 {
 		
 	if(cs_get_user_team(id) != CS_TEAM_SPECTATOR)
-		CC_SendMessage(id, "%L", id, "GOSPEC_NOT_SPECTATOR")
+		ColorChat(id, GREEN, "%s Nie jestes widzem. Aby przejsc na SPEC wpisz ^x03/spec", spPrefix)
 	else
 	{
 		new iPlayers[32], iCT, iT
@@ -64,12 +65,12 @@ public GoBack(id)
 		if(iCT == iT)
 		{
 			cs_set_user_team(id, g_iOldTeam[id])
-			CC_SendMessage(id, "%L", id, "GOSPEC_TRANSFERED_TO_PREVIOUS")
+			ColorChat(id, GREEN, "%s ^x01Przeniesiono z powrotem do gry.", spPrefix)
 		}
 		else
 		{
 			cs_set_user_team(id, iCT > iT ? CS_TEAM_T : CS_TEAM_CT)
-			CC_SendMessage(id, "%L", id, "GOSPEC_TRANSFERED_TO_LESS")
+			ColorChat(id, GREEN, "%s ^x01Przeniesiono z powrotem do gry.", spPrefix)
 		}
 		
 		if(get_pcvar_num(g_eCvars[gospec_respawn]))

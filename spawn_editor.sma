@@ -78,6 +78,8 @@ readSpawns()
 			if (strlen(Data)<2) continue;
 			parse(Data, pos[1], 7, pos[2], 7, pos[3], 7, pos[4], 7, pos[5], 7, pos[6], 7, pos[7], 7, pos[8], 7, pos[9], 7, pos[10], 7);	// KWo - 05.11.2005
 			
+			// -657 -1549 -2912 0 43 0 0 0 43 0
+
 			// Origin
 			g_SpawnVecs[g_TotalSpawns][0] = str_to_num(pos[1]);
 			g_SpawnVecs[g_TotalSpawns][1] = str_to_num(pos[2]);

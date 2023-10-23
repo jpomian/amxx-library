@@ -4,7 +4,7 @@
 #include <hamsandwich>
 #include <biohazard>
 
-native give_user_knockbackimmunity(id, Float:time)
+// native give_user_knockbackimmunity(id, Float:time)
 
 // Default sounds
 new const sound_zombie_madness[] = "zombie/zombie_szalony.wav"
@@ -73,8 +73,6 @@ public SzalonyPost(id)
 	
 	// Set task to remove it
 	set_task(get_pcvar_float(cvar_zombie_madness_time), "remove_zombie_madness", id+TASK_MADNESS)
-
-	give_user_knockbackimmunity(id, get_pcvar_float(cvar_zombie_madness_time))
 }
 
 // Ham Player Spawn Post Forward

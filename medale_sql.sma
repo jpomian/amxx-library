@@ -29,11 +29,11 @@ public plugin_init() {
 	
 	register_clcmd("say /medale", "MenuMedali");
 		
-	gCvary[HOST] 	= register_cvar("medale_hostname", 	"145.239.236.240");
-	gCvary[PASS] 	= register_cvar("medale_password", 	"6hUagoFlgQ");
-	gCvary[USER] 	= register_cvar("medale_username", 	"srv67541");
-	gCvary[DBNAME] 	= register_cvar("medale_dbname", 	"srv67541");
-	gCvary[MIMPLR]	= register_cvar("medale_minp", 		"5");
+	gCvary[HOST] 	= register_cvar("medale_hostname", 	"sql.pukawka.pl");
+	gCvary[PASS] 	= register_cvar("medale_password", 	"zmKOLOSEUM");
+	gCvary[USER] 	= register_cvar("medale_username", 	"898035");
+	gCvary[DBNAME] 	= register_cvar("medale_dbname", 	"898035_medale");
+	gCvary[MIMPLR]	= register_cvar("medale_minp", 		"1");
 	
 	new temp[staty][64];
 	
@@ -71,6 +71,7 @@ public plugin_init() {
 	
 	WczytajMedale();
 }
+
 public client_putinserver(id) {
 	Wyczysc(id);		
 	get_user_name(id, gNick[id], 32);
@@ -234,10 +235,8 @@ public MsgIntermission() {
 		if(best[i]) {
 			gStaty[1+i][best[i]]++;
 			get_user_name(best[i], name, 32);
-			ColorChat(0, NORMAL, "[Medale] ^x03%s^x01 - %s Medal (Razem: ^x03%d^x01)", name, typ[i], gStaty[1+i][best[i]]);
+			ColorChat(0, GREEN, "[Medale] ^x03%s^x01 - %s Medal (Razem: ^x03%d^x01)", name, typ[i], gStaty[1+i][best[i]]);
 		}
 	}
 	return PLUGIN_CONTINUE;
 }
-
-

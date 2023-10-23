@@ -54,12 +54,12 @@ public plugin_init()
 	register_menucmd(register_menuid("Kick Menu"), 1023, "actionKickMenu")
 	register_menucmd(register_menuid("Kick Reason Menu"), 1023, "actionKickMenuReason")
 	
-	register_cvar("amx_kick_r1","Kampienie na polowaniu");
+	register_cvar("amx_kick_r1","Blokujesz");
 	register_cvar("amx_kick_r2","Ochlon");
 	register_cvar("amx_kick_r3","Nie ogarniasz");
 	register_cvar("amx_kick_r4","Klatkujesz");
 	register_cvar("amx_kick_r5","Kultura");
-	register_cvar("amx_kick_r6","Wpychasz ZM do kampy");
+	register_cvar("amx_kick_r6","");
 	register_cvar("amx_kick_r7","");
 	
 	new k1[32], k2[32], k3[32], k4[32], k5[32], k6[32], k7[32];

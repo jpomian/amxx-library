@@ -9,11 +9,11 @@
 
 static const GameNames[][] =
 {
-    "Witamy na Biohazard",
-	"Sklep: /sklepsms",
-	"Komendy pod M",
-	"Nowy Patch!",
-	"Oryginalny Zombie Mod"
+	"Respawn na wejsciu",
+	"Rangi Wojskowe",
+	"Powered by Discord",
+	"Cykl dzienny [9-21]",
+    "TeamPlay!"
 };
 
 static const Float:Interval = 60.0;

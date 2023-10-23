@@ -35,7 +35,7 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <dhudmessage>
-#include <ColorChat>
+#include <colorchat>
  
 new g_msgChannel
  

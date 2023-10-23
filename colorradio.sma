@@ -21,7 +21,7 @@ new const g_szMradFire[] = "%!MRAD_FIREINHOLE";
 public plugin_init( ) {
     register_plugin( "ColorChat Radio + FITH Block", "1.0", "Mixtaz" );
     
-    g_pCvar = register_cvar( "sv_fith_block", "3" ); // 0 - nic nie jest zablokowane, 1 - audio jest zablokowane, 2 - wiadomosc jest zablokowana, 3 - oba sa zablokowane
+    g_pCvar = register_cvar( "sv_fith_block", "2" ); // 0 - nic nie jest zablokowane, 1 - audio jest zablokowane, 2 - wiadomosc jest zablokowana, 3 - oba sa zablokowane
     
     register_message( get_user_msgid( "TextMsg" ),   "MessageTextMsg" );
     register_message( get_user_msgid( "SendAudio" ), "MessageSendAudio" );

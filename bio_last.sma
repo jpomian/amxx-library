@@ -47,6 +47,13 @@ public player_spawned(index)
 
 public player_death()
 {
+        new players = get_playersnum();
+ 
+        // Not enough players on server.
+        if(players < PlayersThreshold)
+        {
+                return;
+        }
  
         new last_ct = get_last_alive(),
                 alive_tts = get_alive(2);

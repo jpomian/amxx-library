@@ -45,7 +45,7 @@ new pID[MAX_PLAYERS][22]
 
 public plugin_init() {
 	register_plugin("No retry","1.16","Priski") 
-	register_cvar("amx_retrytime","15")
+	register_cvar("amx_retrytime","60")
 	register_cvar("amx_retrykick","1")
 	register_cvar("amx_retryshow","0")
 	register_cvar("amx_retrychat","1")
@@ -108,7 +108,7 @@ public client_putinserver(id) {
 	return PLUGIN_HANDLED;
 }
 
-public client_disconnect(id) {
+public client_disconnected(id) {
 	// no bots or admin immunity users are in list
 	if ((is_user_bot(id)) || (get_user_flags(id)&ADMIN_IMMUNITY)) {
 	return PLUGIN_HANDLED; }

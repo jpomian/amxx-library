@@ -1,14 +1,17 @@
 #include <amxmodx>
 #include <cstrike>
 #include <fun>
+#include <colorchat>
 
 #define PLUGIN "Zombie Menu"
 #define VERSION "0.1"
 #define AUTHOR "Mixtaz"
 
-native mapm_start_vote()
+#define DC_INV_LINK "https://discord.gg/czW5ccEur"
 
-new g_testmenu, regumenu, AdmHandl, Tech, Vip, Spec, Head; // tworzymy zmienną globalną, uchwyt dla menu
+native mapm_start_vote();
+
+new g_testmenu, regumenu, AdmHandl, Tech, Vip, Spec, MapM; // tworzymy zmienną globalną, uchwyt dla menu
 //new g_szHTML[ 364 ] = "<html><head><meta http-equiv='Refresh' content='0; URL=https://errorhead.pl/topic/14707-regulamin-serwera-ghost-mode/></head><body bgcolor=black><center>";
 
 new const MenuCommands[][] =
@@ -43,48 +46,49 @@ public plugin_init() {
 	for(new i=0; i < sizeof RulesCommands; i++)
     register_clcmd(RulesCommands[i], "menuregulamin")
 
+	register_clcmd("say /limit", "cmdShowMapLimit")
+	register_clcmd("say /dc", "showDiscordLinkCmd")
+	register_clcmd("say /rangi", "showRangiCmd")
+
 	register_clcmd("chooseteam", "cmdChooseTeam");
 }
 public plugin_cfg()
 {
-	g_testmenu = menu_create("\rNowy Biohazard", "nowemenuhandle");
-	menu_additem(g_testmenu, "\rSklep");
-	menu_additem(g_testmenu, "\yPrzelej pieniadze");
-	menu_additem(g_testmenu, "Osiagniecia^n");
+	g_testmenu = menu_create("\rZombie \wBiohazard", "nowemenuhandle");
+	menu_additem(g_testmenu, "\ySklep \d(/buy)");
+	menu_additem(g_testmenu, "Wyslij kase \d(/daj)")
 	menu_additem(g_testmenu, "Menu Techniczne");
-	Tech = menu_create("\dMenu Techniczne^n^n\wW razie jakichkolwiek klopotow prosze kierowac informacje na:^n\rerrorhead.pl\w.", "TechHandler");
+	Tech = menu_create("\dMenu Techniczne", "TechHandler");
 	menu_additem(Tech, "Menu Mutowania");
-	menu_additem(Tech, "\rWl/Wyl.\w Liste Obserwatorow");
-	menu_additem(Tech, "Przejdz na specta/Wroc do gry")
+	menu_additem(Tech, "Przejdz na specta/Wroc do gry^n^n")
 	menu_additem(Tech, "Powrot do glownego menu");
 	menu_additem(g_testmenu, "Informacje o Vipie");
 	Vip = menu_create("\dZbior informacji o Vipie^n^n\wAby zakupic VIP, napisz\r /sklepsms", "VipHandler");
 	menu_additem(Vip, "Przywileje Vipa");
-	menu_additem(Vip, "Gracze Vip Online");
-	menu_additem(Vip, "\ySklepSMS^n^n");
+	menu_additem(Vip, "Gracze Vip Online^n^n");
 	menu_additem(Vip, "Powrot do glownego menu");
-	menu_additem(g_testmenu, "Nominuj Mapy^n");
-	menu_additem(g_testmenu, "Zobacz Ranking");
+	menu_additem(g_testmenu, "Mapy");
+	MapM = menu_create("\dMenu Map", "MapHandler");
+	menu_additem(MapM, "Limit graczy na mape");
+	menu_additem(MapM, "Zanominuj^n^n")
+	menu_additem(MapM, "Powrot do glownego menu");
 	menu_additem(g_testmenu, "Roundsoundy");
-	menu_additem(g_testmenu, "Medale^n")
-	menu_additem(g_testmenu, "\dOpusc Menu");
+	menu_additem(g_testmenu, "Lista rang");
+	menu_additem(g_testmenu, "Dolacz na nasz serwer \yDiscord\w!^n^n");
 
-	menu_setprop(g_testmenu, MPROP_PERPAGE, 0);
-	menu_setprop(g_testmenu , MPROP_EXIT , MEXIT_NEVER); //Dont allow Menu to exit
+	// menu_setprop(g_testmenu, MPROP_PERPAGE, 0);
 	menu_setprop(Tech , MPROP_EXIT , MEXIT_NEVER);
 
 	AdmHandl = menu_create("Menu Admina", "adminmenuhandle");
-	menu_additem(AdmHandl, "Menu \dOzywiania");
-	menu_additem(AdmHandl, "Menu \dWyciszania");
-	menu_additem(AdmHandl, "Menu \dTeleportacji");
-	menu_additem(AdmHandl, "Menu \dSpeclist^n^n");
+	menu_additem(AdmHandl, "Menu Wyciszania");
+	menu_additem(AdmHandl, "Menu Teleportacji");
+	menu_additem(AdmHandl, "Menu zaaw. obserwatora");
+	menu_additem(AdmHandl, "Wlacz/Wylacz szcz. info o polaczeniu");
+	menu_additem(AdmHandl, "Wymus glosowanie \d(z zapisem do logow)^n^n");
+
 	Spec = menu_create("\dUkryj/Pokaz klawisze/siebie na liscie", "SpecHandler");
 	menu_additem(Spec, "Ukryj sie na spec");
 	menu_additem(Spec, "Wlacz klawisze u gracza");
-	menu_additem(AdmHandl, "Menu \rWaznych", _, ADMIN_IMMUNITY);
-	Head = menu_create("\dUkryj/Pokaz klawisze/siebie na liscie", "HeadHandler");
-	menu_additem(Head, "Wymus glosowanie");
-	menu_additem(Head, "Tryb Nemesis");
 }
 public nowemenu(id) {
 	menu_display(id, g_testmenu);
@@ -107,48 +111,55 @@ public nowemenuhandle(id, menu, item) {
 	switch(item) { 
 		case 0: cmdExecute(id, "say /sklep")
 		case 1: cmdExecute(id, "say /daj")
-		case 2: cmdExecute(id, "say /achs")
-		case 3: menu_display(id, Tech, 0)
-		case 4: menu_display(id, Vip, 0)
-		case 5: cmdExecute(id, "say /mapy")
-		case 6: cmdExecute(id, "say /top15")
-		case 7: cmdExecute(id, "say /rs")
-		case 8: cmdExecute(id, "say /medale")
-		case 9: show_menu(id, 0, "^n", 1);
+		case 2: menu_display(id, Tech, 0)
+		case 3: menu_display(id, Vip, 0)
+		case 4: menu_display(id, MapM, 0)
+		case 5: cmdExecute(id, "say /rs")
+		case 6: cmdExecute(id, "say /rangi")
+		case 7: showDiscordLinkCmd(id)
+		// case 9: show_menu(id, 0, "^n", 1);
 	}
 
 	return PLUGIN_HANDLED;
 }
+
 public TechHandler(id, menu, item){
 	switch(item){
 		case 0: cmdExecute(id, "say /mute")
-		case 1: cmdExecute(id, "say /speclist")
-		case 2: cmdExecute(id, get_user_team(id) == 3 ? "say /back" : "say /spec")
-		case 3: menu_display(id, g_testmenu)
+		case 1: cmdExecute(id, get_user_team(id) == 3 ? "say /back" : "say /spec")
+		case 2: menu_display(id, g_testmenu)
 	}
 }
 public VipHandler(id, menu, item){
 	switch(item){
 		case 0: cmdExecute(id, "say /vip")
 		case 1: cmdExecute(id, "say /vips")
-		case 2: cmdExecute(id, "say /sklepsms")
-		case 3: menu_display(id, g_testmenu)
+		case 2: menu_display(id, g_testmenu)
 	}
 }
+public MapHandler(id, menu, item){
+	switch(item){
+		case 0: show_motd( id,"limit.txt","Limit graczy")
+		case 1: cmdExecute(id, "say /mapy")
+		case 2: menu_display(id, g_testmenu)
+	}
+}
+
 public adminmenuhandle(id, menu, item) {
 	if(item == MENU_EXIT) {
 		return PLUGIN_HANDLED;
 	}
 
 	switch(item) {
-		case 0: cmdExecute(id, "amx_ozyw")
-		case 1: cmdExecute(id, "amx_gagmenu")
-		case 2: cmdExecute(id, "amx_teleport")
-		case 3: menu_display(id, Spec, 0)
-		case 4: menu_display(id, Head, 0)
+		case 0: cmdExecute(id, "amx_gagmenu")
+		case 1: cmdExecute(id, "amx_teleport")
+		case 2: menu_display(id, Spec, 0)
+		case 3: cmdExecute(id, "say /playerinfo")
+		case 4: mapm_start_vote()
 	}
 	return PLUGIN_HANDLED;
 }
+
 public SpecHandler(id, menu, item)
 {
 	if(item == MENU_EXIT) {
@@ -162,19 +173,7 @@ public SpecHandler(id, menu, item)
 
 	return PLUGIN_HANDLED;
 }
-public HeadHandler(id, menu, item)
-{
-	if(item == MENU_EXIT) {
-		return PLUGIN_HANDLED;
-	}
 
-	switch(item) {
-		case 0: mapm_start_vote()
-		case 1: cmdExecute(id, "say /nemesis")
-	}
-
-	return PLUGIN_HANDLED;
-}
 public cmdChooseTeam(id)
 {
 	menu_display(id, g_testmenu);
@@ -182,7 +181,7 @@ public cmdChooseTeam(id)
 }
 public menuregulamin(id)
 {
-	regumenu = menu_create("Regulaminy serwera^nPelny regulamin znajduje sie na \rErrorhead.pl", "regumenu_handler");
+	regumenu = menu_create("Regulaminy serwera \d(PS: Tu narazie nic nie ma, wiec badz \rgrzeczny!\d)", "regumenu_handler");
 	menu_additem(regumenu, "Zasady \dOgolne");
 	menu_additem(regumenu, "Zasady dla \rZombie");
 	menu_additem(regumenu, "Zasady dla \yCT^n");
@@ -199,6 +198,26 @@ public regumenu_handler(id, menu, item) {
 		case 2: show_motd(id,"forct.txt", "Zasady dla CT.")
 	}
 	return PLUGIN_HANDLED;
+}
+public cmdShowMapLimit(id)
+{
+	show_motd( id,"limit.txt","Limit graczy")
+}
+
+public showDiscordLinkCmd(id)
+{
+	ColorChat(id, GREEN, "[Discord]^x01 Link do naszego serwera DC zostal wyslany do Twojej konsoli.")
+
+	client_print(id, print_console, "")
+	client_print(id, print_console, "==========================================")
+	client_print(id, print_console, "Link: %s", DC_INV_LINK)
+	client_print(id, print_console, "==========================================")
+}
+
+
+public showRangiCmd(id)
+{
+	show_motd( id,"rangi.txt","Lista rang")
 }
 stock cmdExecute( id , const szText[] , any:... ) {
 	

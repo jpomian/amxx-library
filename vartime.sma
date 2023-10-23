@@ -25,27 +25,31 @@ enum _:TimeTableEnumerator (+= 1)
 static const TimeTable[][] =
 {
 	{ 1,	6,		DefaultTime },
-	{ 7,	14,		DefaultTime + 1 },
+	{ 8,	14,		DefaultTime + 1 },
 	{ 15,	20,		DefaultTime + 2 },
 	{ 21,	32,		DefaultTime + 3 }
 };
+
+new g_pcvar_roundtime, g_pcvar_extendable;
 
 public plugin_init()
 {
 	register_plugin("x", "v0.1", AUTHOR);
 
 	register_logevent("RoundStart", 2, "1=Round_Start");
+
+	g_pcvar_roundtime = get_cvar_pointer("mp_roundtime")
+
+	g_pcvar_extendable = register_cvar("mp_roundextend", "0")
 }
 
 public RoundStart()
 {
 	new players_amount = get_players_amount(),
-		round_time = players_amount_to_round_time(players_amount);
-	
-	new map[6]
-	get_mapname(map,5)
-	
-	set_cvar_num("mp_roundtime", equal(map,"ze", 2) ? round_time + 2 : round_time);
+	round_time = players_amount_to_round_time(players_amount),
+	extend = get_pcvar_num(g_pcvar_extendable)
+
+	set_pcvar_num(g_pcvar_roundtime, round_time+extend)
 }
 
 players_amount_to_round_time(amount)
@@ -69,7 +73,7 @@ get_players_amount()
 
 	ForPlayers(i)
 	{
-		if(!is_user_connected(i) || is_user_hltv(i) || is_user_bot(i))
+		if(!is_user_connected(i))
 		{
 			continue;
 		}

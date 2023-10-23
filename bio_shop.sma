@@ -1,232 +1,470 @@
 #include <amxmodx>
-#include <colorchat>
-#include <cstrike>
-#include <fakemeta>
 #include <fun>
-#include <hamsandwich>
-#include <Achievements>
+#include <cstrike>
+#include <colorchat>
+#include <fakemeta>
 #include <biohazard>
 
-native give_user_napalmnade(id)
-	native give_user_knockbackimmunity(id, Float:time)
-	native get_user_zombiemadness(id)
-	native respawn_zombie(id)
-	
-#define PLUGIN "Sklep Ghost"
-#define VERSION "0.2"
+#define PLUGIN "Biohazard Shop"
+#define VERSION "1.0"
 #define AUTHOR "Mixtaz"
-
-#define is_vip(%1) get_user_flags(%1) & ADMIN_LEVEL_H
-#define is_vip_plus(%1) get_user_flags(%1) & ADMIN_LEVEL_G
-#define ReductionCalcMethod(%1) GetUnlocksCount(%1)-g_handleThreshold
-#define ItemRegister(%1,%2,%3) formatex(%1, charsmax(%1), "%s \r [\y%i $\r]", %2, %3-((%3/100)*g_priceReduction[id]))
 
 #define OFFSET_NVGOGGLES    129
 #define HAS_NVGS (1<<0)
 #define USES_NVGS (1<<8)
 
-new gmsgNVGToggle
+#define is_vip(%1) (get_user_flags(%1) & ADMIN_LEVEL_H)
+#define VIP_BONUS 5
+#define ItemRegister(%1,%2,%3) formatex(%1, charsmax(%1), "%s \r [\y%i $\r]", %2, %3-((%3/100)*g_iDiscount[id]))
+#define RestrictedItemRegister(%1,%2,%3,%4,%5) formatex(%1, charsmax(%1), "%s \r [\y%i $\r] \d(%i/%i)", %2, %3-((%3/100)*g_iDiscount[id]), %4, %5)
 
-new bool: unAmmo[33];
-new g_perkUsed[33];
-new g_priceReduction[33];
 
-new const g_handleThreshold = 5;
-new const g_vipBonus = 10;
+native give_user_napalmnade(id);
+native get_user_zombiemadness(id);
+native set_user_kbimmunity(id, Float:fReduction, bool:isDucking);
+native respawn_zombie(id);
 
-enum (+=1) {
-	VIP_UNLIMITED_LIMIT = 1,
-	VIPPLUS_UNLIMITED_LIMIT
+native get_rank_order(id);
+native get_user_rank(id, szReturn[], iLen);
+
+enum ITEM_TYPE {
+    RESP,
+    HP,
+    AMMO
 }
 
-new times_used[33], maxgraczy;
+new const g_hardscream[] = "zombie/dupa_activated.wav";
 
-enum ItemInfo { _Opis[50], _Cena }
+new g_iBlinkAcct, gmsgNVGToggle, maxplayers;
+new g_hasConsumed[33][ITEM_TYPE];
+new g_iDiscount[33];
+new bool: unAmmo[33], bool:g_bNotified[33] = false;
 
-new const ItemyTT[][ItemInfo] = {
-	{ "+500 HP",	3000 },
-	{ "Respawn",	5000} ,
-	{ "Ciezka Dupa", 10000 },
-	{ "Szalone Zombie", 12000 },
-	{ "Antidotum", 16000 }
-}
-new const ItemyCT[][ItemInfo] = {
-	{ "HE", 5000 },
-	{ "Zamrazacz", 5000 },
-	{ "Podpalacz", 5000 },
-	{ "Flara", 1000 },
-	{ "Noktowizor", 2000},
-	{ "Autokampa", 16000 },
-	{ "Nieskonczona amunicja [VIP]", 16000 }
-} 
 
-new const SklepCommands[][] =
+new g_szItemsTT[][] = 
 {
-"say /sklep",
-"say_team /sklep",
-"say /buy",
-"say_team /buy"
+    "+500 HP",
+    "Respawn",
+    "Obniżona grawitacja (5 sek.)",
+    "Ciezka Dupa",
+    "Szalone Zombie",
+    "Antidotum",
 }
 
-new const g_shopgreetings[] = "zombie/powitanie.wav"
-new const g_hardscream[] = "zombie/ciezka.wav"
+new g_iItemsPricesTT[] = 
+{
+    2000,
+    2500,
+    8000,
+    12000,
+    14000,
+    16000   
+}
+
+new g_szItemsCT[][] = 
+{
+    "HE",
+    "Zamrazacz",
+    "Podpalacz",
+    "Flara",
+    "Noktowizor",
+    "Autokampa",
+    "Unlimited Ammo [VIP]"
+}
+
+new g_iItemsPricesCT[] = 
+{
+    5000, 
+    5500, 
+    7500,
+    500,
+    2000,
+    14000,
+    16000   
+}
+
+new g_itemLimit[ITEM_TYPE] =
+{
+    1,
+    2,
+    1
+}
+
+new const g_ShopCommands[][] =
+{
+    "say /sklep",
+    "say_team /sklep",
+    "say /buy",
+    "say_team /buy"
+}
 
 public plugin_init() {
-	register_plugin(PLUGIN, VERSION, AUTHOR)
+    register_plugin(PLUGIN, VERSION, AUTHOR)
+    
+    g_iBlinkAcct = get_user_msgid("BlinkAcct") //msg
+    
+    for(new i=0; i < sizeof g_ShopCommands; i++)
+		register_clcmd(g_ShopCommands[i], "cmdShopDirect")
 
-	for(new i=0; i < sizeof SklepCommands; i++)
-		register_clcmd(SklepCommands[i], "cmdPodzial")
-	
-	RegisterHam(Ham_Spawn, "player", "Fwd_PlayerSpawn_Post", 1);
-	register_logevent("Poczatek_Rundy", 2, "1=Round_Start")
-	register_event("CurWeapon", "UnlimitedAmmo", "be", "1=1")
+    register_logevent("round_start", 2, "1=Round_Start")
+    maxplayers = get_maxplayers()
 
-	maxgraczy=get_maxplayers()
+    register_event("CurWeapon", "UnlimitedAmmo", "be", "1=1")
+
 }
+
 public plugin_precache()
 {
-	precache_sound(g_shopgreetings);
 	precache_sound(g_hardscream);
 }
-public client_connect(id)
-{
-	if(is_user_connected(id) && !is_user_hltv(id)){
-		unAmmo[id] = false;
-		g_perkUsed[id] = false;
-	}
+
+public round_start() {
+    for(new i=1; i<maxplayers;i++) {
+            g_hasConsumed[i][HP] = 0;
+            g_hasConsumed[i][RESP] = 0;
+            unAmmo[i] = false;
+    }
 }
+
 public client_authorized(id)
 {
-	g_priceReduction[id] = is_vip(id) ? ReductionCalcMethod(id) + g_vipBonus : ReductionCalcMethod(id) < 0 ? 0 : ReductionCalcMethod(id)
+    g_iDiscount[id] = is_vip(id) ? VIP_BONUS : 0;
+    get_rank_order(id);
 }
-public client_disconnected(id)
-{
-	unAmmo[id] = false;
-	g_perkUsed[id] = false;
-}
-public Poczatek_Rundy() for(new i=1; i<maxgraczy;i++) times_used[i]=0;
-public cmdPodzial(id)
-{
-	client_cmd(id,"spk %s", g_shopgreetings)
-	
-	if(is_user_zombie(id))
-		SklepTT(id)
-	else
-		SklepCT(id)
 
-	if(GetUnlocksCount(id) < 10)
-			ColorChat(id, GREEN, "[Sklep]^x01 10 pierwszych osiagniec nie daje znizki.")
-	
-	return PLUGIN_HANDLED;
-}
-public SklepTT(id)
+public cmdShopDirect(id)
 {
-	
-	g_priceReduction[id] = is_vip(id) ? ReductionCalcMethod(id) + g_vipBonus : ReductionCalcMethod(id) < 0 ? 0 : ReductionCalcMethod(id)
-	
-	new tytulTT[60], hTT;
-	new itemStrBufferTT[50]
-	new numer1[10]
-	formatex(tytulTT, charsmax(tytulTT), "Sklep Zombie - Znizka\r [%i %%]\d %s", g_priceReduction[id], is_vip(id) ? "(Dodatkowa znizka VIP)" : "");
-	new menuTT = menu_create(tytulTT, "SklepTT_Handler");
+    // cs_set_user_money(id, 16000);
+    new iRank, szRank[32];
+    iRank = get_rank_order(id);
+    get_user_rank(id, szRank, charsmax(szRank))
+    g_iDiscount[id] = is_vip(id) ? VIP_BONUS + iRank : iRank;
 
-	hTT = menu_makecallback("TTShop_Callback");
-	
-	ItemRegister(itemStrBufferTT, ItemyTT[0][_Opis], ItemyTT[0][_Cena])
-	menu_additem(menuTT, itemStrBufferTT, numer1, _, hTT)
-
-	for(new i = 1; i < sizeof(ItemyTT); i++) {
-		num_to_str(i, numer1, 9)
-		ItemRegister(itemStrBufferTT, ItemyTT[i][_Opis], ItemyTT[i][_Cena])
-		menu_additem(menuTT, itemStrBufferTT, numer1)
-	}
-
-	menu_setprop(menuTT, MPROP_EXIT, 0);
-	menu_display(id, menuTT);
-	
-	return PLUGIN_HANDLED
+    is_user_zombie(id) ? cmdShopTT(id) : cmdShopCT(id);
+    
+    if(!g_bNotified[id])
+    {
+        ColorChat(id, GREEN, "[Sklep]^x01 Zaaplikowano znizke dla rangi:^x04 %s^x01. Poziom znizki: ^x04%i%%%%^x01.", szRank, iRank)
+        g_bNotified[id] = true;
+    }
+    return PLUGIN_HANDLED;
 }
-public TTShop_Callback(id, hMenu, iItem)
+public cmdShopTT(id)
 {
-	if(iItem == 0) return times_used[id] >= 3 ? ITEM_DISABLED : ITEM_ENABLED;
+    new Temp[101];
+    
+    formatex(Temp,100, "Sklep Zombie \w[Znizka: \y%i %%\w]", g_iDiscount[id]);
+    new menu = menu_create(Temp, "handler_ShopMenuTT")
+    
+    new szItemName[64]
 
-	return ITEM_ENABLED;		
+    RestrictedItemRegister(szItemName, g_szItemsTT[ 0 ], g_iItemsPricesTT[ 0 ], g_hasConsumed[id][HP], g_itemLimit[HP])
+    menu_additem(menu, szItemName)
+
+    RestrictedItemRegister(szItemName, g_szItemsTT[ 1 ], g_iItemsPricesTT[ 1 ], g_hasConsumed[id][RESP], g_itemLimit[RESP])
+    menu_additem(menu, szItemName)
+
+    for(new i=2; i<sizeof(g_szItemsTT) && i<sizeof(g_iItemsPricesTT); i++)
+    {
+        ItemRegister(szItemName, g_szItemsTT[ i ], g_iItemsPricesTT[ i ])
+        menu_additem(menu, szItemName)
+    }
+    
+    menu_setprop(menu, MPROP_NUMBER_COLOR, "\y")
+    
+    menu_display(id, menu, 0);
+    
+    return PLUGIN_HANDLED;
 }
-public SklepTT_Handler(id, menuTT, item)
+public cmdShopCT(id)
 {
-	if(is_user_zombie(id) && is_user_connected(id)){
-		new money = cs_get_user_money(id)
-		g_priceReduction[id] = is_vip(id) ? ReductionCalcMethod(id) + g_vipBonus : ReductionCalcMethod(id) < 0 ? 0 : ReductionCalcMethod(id)
-		
-		set_dhudmessage(222, 46, 24, -1.0, 0.3, 1, 0.02, 1.0, 0.01, 0.1);
-		
-		if(item == MENU_EXIT)
-		{
-			return PLUGIN_CONTINUE;
-		}
-		switch(item)
-		{
-			case 0:
-			{
-				if(is_user_alive(id) && money >= ItemyTT[0][_Cena]-((ItemyTT[0][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyTT[0][_Cena]-((ItemyTT[0][_Cena]/100)*g_priceReduction[id]))
-					set_user_health(id, get_user_health(id) + 500)
-					times_used[id]++
-					show_dhudmessage(id, "Zakupiono %s", ItemyTT[0][_Opis]);  
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyTT[0][_Cena]-((ItemyTT[0][_Cena]/100)*g_priceReduction[id]) - money, ItemyTT[0][_Opis])
-				}
-			}
-			case 1:
-			{
-				if(!is_user_alive(id)){
-					if(money >= ItemyTT[1][_Cena]-((ItemyTT[1][_Cena]/100)*g_priceReduction[id])){
-						Reduce(id, ItemyTT[1][_Cena]-((ItemyTT[1][_Cena]/100)*g_priceReduction[id]))
-						respawn_zombie(id)
-						show_dhudmessage(id, "Zakupiono %s", ItemyTT[1][_Opis]);  
-						} else {
-						ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyTT[1][_Cena]-((ItemyTT[1][_Cena]/100)*g_priceReduction[id]) - money, ItemyTT[1][_Opis])
-					}
-				} else
-				ColorChat(id, GREEN, "[Sklep]^x01 Jestes zywy, nie mozesz kupic respawnu.")
-			}
-			case 2:
-			{
-				if(is_user_alive(id) && money >= ItemyTT[2][_Cena]-((ItemyTT[2][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyTT[2][_Cena]-((ItemyTT[2][_Cena]/100)*g_priceReduction[id]))
-					give_user_knockbackimmunity(id, 5.0)
-					give_efekty(id)
-					show_dhudmessage(id, "Zakupiono %s", ItemyTT[2][_Opis]);
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyTT[2][_Cena]-((ItemyTT[2][_Cena]/100)*g_priceReduction[id]) - money, ItemyTT[2][_Opis])
-				}
-			}
-			case 3:
-			{
-				if(is_user_alive(id) && money >= ItemyTT[3][_Cena]-((ItemyTT[3][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyTT[3][_Cena]-((ItemyTT[3][_Cena]/100)*g_priceReduction[id]))
-					give_user_knockbackimmunity(id, 5.0)
-					get_user_zombiemadness(id)
-					show_dhudmessage(id, "Zakupiono %s", ItemyTT[3][_Opis]);  
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyTT[3][_Cena]-((ItemyTT[3][_Cena]/100)*g_priceReduction[id]) - money, ItemyTT[3][_Opis])
-				}
-			}
-			case 4:
-			{
-				if(is_user_alive(id) && money >= ItemyTT[4][_Cena]-((ItemyTT[4][_Cena]/100)*g_priceReduction[id])){
-					check_prerequisities(id)
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyTT[4][_Cena]-((ItemyTT[4][_Cena]/100)*g_priceReduction[id]) - money, ItemyTT[4][_Opis])
-				}
-			}
-		}
-	} else
-	return PLUGIN_CONTINUE;
-	
-	return PLUGIN_CONTINUE;
+    new Temp[101];
+    
+    formatex(Temp,100, "Sklep Czlowieka \w[Znizka: \y%i %%\w]", g_iDiscount[id]);
+    new menu = menu_create(Temp, "handler_ShopMenuCT")
+    
+    new szItemName[64]
+
+    for(new i=0; i<sizeof(g_szItemsCT) - 1 && i<sizeof(g_iItemsPricesCT) - 1; i++)
+    {
+        ItemRegister(szItemName, g_szItemsCT[ i ], g_iItemsPricesCT[ i ])
+        menu_additem(menu, szItemName)
+    }
+    
+    RestrictedItemRegister(szItemName, g_szItemsCT[ 6 ], g_iItemsPricesCT[ 6 ], g_hasConsumed[id][AMMO], g_itemLimit[AMMO])
+    menu_additem(menu, szItemName)
+
+    menu_setprop(menu, MPROP_NUMBER_COLOR, "\y")
+    
+    menu_display(id, menu, 0);
+    
+    return PLUGIN_HANDLED;
 }
-public give_efekty(id)
+
+public handler_ShopMenuTT(id, menu, item)
+{
+    if( item == MENU_EXIT )
+    {
+        menu_destroy(menu);
+        return PLUGIN_HANDLED;
+    }
+
+    
+    if( !is_user_zombie(id) )
+    {
+        return PLUGIN_HANDLED;
+    }
+
+    new itemAdjustedPrice = g_iItemsPricesTT[item] - (g_iItemsPricesTT[item]/100)*g_iDiscount[id]
+    new money = cs_get_user_money(id);
+    new new_money = cs_get_user_money(id) - itemAdjustedPrice;
+    
+    if( money < itemAdjustedPrice )
+    {
+        NotEnoughMoney( id );
+        menu_display(id, menu);
+        return PLUGIN_HANDLED;
+    }
+    
+    switch(item)
+    {
+        case 0: 
+        {
+                if( g_hasConsumed[id][HP] == 2 )
+                {
+                    Met_Item_Threshold( id );
+                }
+                else {
+                    set_user_health(id, get_user_health(id) + 500)
+
+                    g_hasConsumed[id][HP]++;
+                
+                    client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+
+                    cs_set_user_money(id, new_money);
+                }
+        }
+        case 1: 
+        {
+                if(is_user_alive(id))
+                {
+                    Cant_When_Alive( id );
+                }
+                else if( g_hasConsumed[id][RESP] == 1 )
+                {
+                    Met_Item_Threshold( id );
+                }
+                else {
+                    respawn_zombie(id)
+
+                    g_hasConsumed[id][RESP]++;
+                
+                    client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+
+                    cs_set_user_money(id, new_money);
+                }
+        }
+        case 2:
+        {
+            
+                set_user_gravity(id, 0.375)
+                set_user_kbimmunity(id, 0.5, false)
+                set_task(5.0, "cease_lesser_effect", id)
+
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                
+                cs_set_user_money(id, new_money);
+        }
+        case 3:
+        {
+                set_user_kbimmunity(id, 1.0, true)
+                give_user_effects(id)
+                set_task(5.0, "cease_full_effect", id)
+
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                
+                cs_set_user_money(id, new_money);
+        }
+        case 4:
+        {
+
+                get_user_zombiemadness(id)
+                set_user_kbimmunity(id, 1.0, false)
+
+                set_task(5.0, "cease_full_effect", id)
+
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                
+                cs_set_user_money(id, new_money);
+        }
+        case 5:
+        {
+            if(check_prerequisities(id)) {
+
+                set_user_human(id)
+                
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                
+                cs_set_user_money(id, new_money);
+            }
+        }
+    }
+    menu_destroy(menu);
+    return PLUGIN_HANDLED;
+}
+
+public handler_ShopMenuCT(id, menu, item)
+{
+    if( item == MENU_EXIT )
+    {
+        menu_destroy(menu);
+        return PLUGIN_HANDLED;
+    }
+
+    if( is_user_zombie(id) )
+    {
+        return PLUGIN_HANDLED;
+    }
+
+    new itemAdjustedPrice = g_iItemsPricesCT[item] - (g_iItemsPricesCT[item]/100)*g_iDiscount[id]
+    new money = cs_get_user_money(id);
+    new new_money = cs_get_user_money(id) - itemAdjustedPrice;
+    
+    if( money < itemAdjustedPrice )
+    {
+        NotEnoughMoney( id );
+        menu_display(id, menu);
+        return PLUGIN_HANDLED;
+    }
+    
+    switch(item)
+    {
+        case 0:
+        {
+            if( user_has_weapon(id, CSW_HEGRENADE) )
+            {
+                Cannot_Carry_Anymore( id );
+            }
+            else {
+                give_item(id, "weapon_hegrenade");
+                
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                
+                cs_set_user_money(id, new_money);
+            }
+        }
+        case 1:
+        {
+            if( user_has_weapon(id, CSW_SMOKEGRENADE) )
+            {
+                Cannot_Carry_Anymore( id );
+            }
+            else {
+                give_item(id, "weapon_smokegrenade");
+                
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                
+                cs_set_user_money(id, new_money);
+            }
+        }
+        case 2:
+        {
+            if( user_has_weapon(id, CSW_HEGRENADE) )
+            {
+                Cannot_Carry_Anymore( id );
+            }
+            else {
+                give_user_napalmnade( id )
+                
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                
+                cs_set_user_money(id, new_money);
+            }
+        }
+        case 3: 
+        {
+            if( cs_get_user_bpammo( id, CSW_FLASHBANG ) == 2 )
+            {
+                Cannot_Carry_Anymore( id );
+            }
+            else
+            {
+                give_item(id, "weapon_flashbang");
+                
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                
+                cs_set_user_money(id, new_money);
+            }
+        }
+        case 4: 
+        {
+            if( cs_get_user_nvg(id) )
+            {
+                Cannot_Carry_Anymore( id );
+            }
+            else {
+                cs_set_user_nvg(id, 1)
+                
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                
+                cs_set_user_money(id, new_money);
+            }
+        }
+
+        case 5:
+        {
+            
+            switch(random(2))
+			{
+				case 0: give_item(id, "weapon_g3sg1")
+				case 1: give_item(id, "weapon_sg550")
+			}
+                
+            client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                
+            cs_set_user_money(id, new_money);
+        }
+
+        case 6:
+        {
+            if(!is_vip(id))
+            {
+                Not_A_VipPlayer(id)
+            }
+            else if( g_hasConsumed[id][AMMO] == g_itemLimit[AMMO] )
+            {
+                Met_Item_Threshold( id );
+            }
+            else {
+                unAmmo[id] = true;
+
+                g_hasConsumed[id][AMMO]++;
+
+                set_user_clip(id, 31)
+                
+                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+
+                cs_set_user_money(id, new_money);
+            }
+        }
+    }
+
+    menu_destroy(menu);
+    return PLUGIN_HANDLED;
+}
+
+public cease_lesser_effect(id)
+{
+    set_user_gravity(id, 1.0)
+    set_user_kbimmunity(id, 0.0, false)
+}
+
+public cease_full_effect(id)
+{
+    set_user_kbimmunity(id, 0.0, false)
+}
+
+public give_user_effects(id)
 {
 	new origin[3]
 	get_user_origin(id, origin)
@@ -244,6 +482,16 @@ public give_efekty(id)
 	message_end()
 	
 }
+
+public UnlimitedAmmo(id)
+{
+	if (!is_user_alive(id) || !unAmmo[id]) return 0
+	
+	set_user_clip(id, 31)
+	
+	return 0
+}
+
 public check_prerequisities(id)
 {    
 	new ts[32], tsnum
@@ -268,192 +516,26 @@ public check_prerequisities(id)
 	if (tsnum == 1)
 	{
 		ColorChat(id, GREEN, "[Sklep]^x01 Jestes ostatnim zombie.")
-		return PLUGIN_HANDLED
+		return false;
 	}
 
 	if(is_user_firstzombie(id))
 	{
 		ColorChat(id, GREEN, "[Sklep]^x01 Jestes matka zombie.")
-		return PLUGIN_HANDLED
+		return false;
 	}
 	
 	/* Check user alive */
 	if(!is_user_alive(id))
-		return PLUGIN_HANDLED
+		return false;
 	
 	/* Check user zombie */
 	if(!is_user_zombie(id))
-		return PLUGIN_HANDLED
+		return false;
 	
-	/* Set user to survivor */
-	Reduce(id, ItemyTT[4][_Cena]-((ItemyTT[4][_Cena]/100)*g_priceReduction[id]))
-	set_dhudmessage(0, 0, 220, -1.0, 0.3, 1, 0.02, 1.0, 0.01, 0.1);  
-	show_dhudmessage(id, "Zakupiono Antidotum")
-	set_user_human(id)
-	
-	return PLUGIN_HANDLED
+	return true;
 }
-public SklepCT(id)
-{
-	g_priceReduction[id] = is_vip(id) ? ReductionCalcMethod(id) + g_vipBonus : ReductionCalcMethod(id) < 0 ? 0 : ReductionCalcMethod(id)
-	
-	static menuCT, hCT;
-	new itemStrBufferCT[50]
-	new tytulCT[96];
-	new numer2[10]
-	
-	formatex(tytulCT, charsmax(tytulCT), "Sklep Czlowieka - Znizka\r [%i %%]\d %s", g_priceReduction[id], is_vip(id) ? "(Dodatkowa znizka VIP)" : "");
-	menuCT = menu_create(tytulCT, "SklepCT_Handler");
-	
-	for(new i = 0; i < sizeof(ItemyCT)-1; i++) {
-		num_to_str(i, numer2,9)
-		ItemRegister(itemStrBufferCT, ItemyCT[i][_Opis], ItemyCT[i][_Cena])
-		menu_additem(menuCT, itemStrBufferCT, numer2)
-	}
-	hCT = menu_makecallback("CTShop_Callback");
-	ItemRegister(itemStrBufferCT, ItemyCT[6][_Opis], ItemyCT[6][_Cena])
-	menu_additem(menuCT, itemStrBufferCT, numer2, _, hCT);
-	menu_setprop(menuCT, MPROP_EXIT, 0);
-	menu_display(id, menuCT);
-	
-	return PLUGIN_HANDLED
-}
-public CTShop_Callback(id, hMenu, iItem)
-{
-	if(iItem == 6)
-	{
-		if(is_vip(id))
-			return g_perkUsed[id] < VIP_UNLIMITED_LIMIT ? ITEM_ENABLED : ITEM_DISABLED;
-		if(is_vip_plus(id))
-			return g_perkUsed[id] < VIPPLUS_UNLIMITED_LIMIT ? ITEM_ENABLED : ITEM_DISABLED;
-	}
-	return ITEM_DISABLED;		
-}
-public SklepCT_Handler(id, menuCT, item)
-{
-	if(!is_user_zombie(id) && is_user_alive(id)){
-		new money = cs_get_user_money(id)
-		g_priceReduction[id] = is_vip(id) ? ReductionCalcMethod(id) + g_vipBonus : ReductionCalcMethod(id) < 0 ? 0 : ReductionCalcMethod(id)
-		
-		set_dhudmessage(24, 46, 222, -1.0, 0.3, 1, 0.02, 1.0, 0.01, 0.1);
-		
-		if(item == MENU_EXIT)
-		{
-			return PLUGIN_CONTINUE;
-		}
-		switch(item)
-		{
-			case 0:
-			{
-				if(money >= ItemyCT[0][_Cena]-((ItemyCT[0][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyCT[0][_Cena]-((ItemyCT[0][_Cena]/100)*g_priceReduction[id]))
-					give_item(id, "weapon_hegrenade");
-					show_dhudmessage(id, "Zakupiono %s", ItemyCT[0][_Opis]);  
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyCT[0][_Cena]-((ItemyCT[0][_Cena]/100)*g_priceReduction[id]) - money, ItemyCT[0][_Opis])
-				}
-			}
-			case 1:
-			{
-				if(money >= ItemyCT[1][_Cena]-((ItemyCT[1][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyCT[1][_Cena]-((ItemyCT[1][_Cena]/100)*g_priceReduction[id]))
-					give_item(id, "weapon_smokegrenade")
-					show_dhudmessage(id, "Zakupiono %s", ItemyCT[1][_Opis]);  
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyCT[1][_Cena]-((ItemyCT[1][_Cena]/100)*g_priceReduction[id]) - money, ItemyCT[1][_Opis])
-				}
-			}
-			case 2:
-			{
-				if(money >= ItemyCT[2][_Cena]-((ItemyCT[2][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyCT[2][_Cena]-((ItemyCT[2][_Cena]/100)*g_priceReduction[id]))
-					give_user_napalmnade(id)
-					show_dhudmessage(id, "Zakupiono %s", ItemyCT[2][_Opis]);  
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyCT[2][_Cena]-((ItemyCT[2][_Cena]/100)*g_priceReduction[id]) - money, ItemyCT[2][_Opis])
-				}
-			}
-			case 3:
-			{
-				if(money >= ItemyCT[3][_Cena]-((ItemyCT[3][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyCT[3][_Cena]-((ItemyCT[3][_Cena]/100)*g_priceReduction[id]))
-					give_item(id, "weapon_flashbang");
-					show_dhudmessage(id, "Zakupiono %s", ItemyCT[3][_Opis]);  
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyCT[3][_Cena]-((ItemyCT[3][_Cena]/100)*g_priceReduction[id]) - money, ItemyCT[3][_Opis])
-				}
-			}
-			case 4:
-			{
-				if(money >= ItemyCT[4][_Cena]-((ItemyCT[4][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyCT[4][_Cena]-((ItemyCT[4][_Cena]/100)*g_priceReduction[id]))
-					cs_set_user_nvg(id, 1)
-					show_dhudmessage(id, "Zakupiono %s", ItemyCT[4][_Opis]);  
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyCT[4][_Cena]-((ItemyCT[4][_Cena]/100)*g_priceReduction[id]) - money, ItemyCT[4][_Opis])
-				}
-			}
-			case 5:
-			{
-				if(money >= ItemyCT[5][_Cena]-((ItemyCT[5][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyCT[5][_Cena]-((ItemyCT[5][_Cena]/100)*g_priceReduction[id]))
-					switch(random(2))
-					{
-						case 0: give_item(id, "weapon_g3sg1")
-						case 1: give_item(id, "weapon_sg550")
-					}
-					set_dhudmessage(24, 46, 222, -1.0, 0.4, 1, 0.02, 1.0, 0.01, 0.1);  
-					show_dhudmessage(id, "Zakupiono %s", ItemyCT[5][_Opis]);  
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyCT[5][_Cena]-((ItemyCT[5][_Cena]/100)*g_priceReduction[id]) - money, ItemyCT[5][_Opis])
-				}
-			}
-			case 6:
-			{
-				if(money >= ItemyCT[6][_Cena]-((ItemyCT[6][_Cena]/100)*g_priceReduction[id])){
-					Reduce(id, ItemyCT[6][_Cena]-((ItemyCT[6][_Cena]/100)*g_priceReduction[id]))
-					set_dhudmessage(24, 46, 222, -1.0, 0.4, 1, 0.02, 1.0, 0.01, 0.1);  
-					show_dhudmessage(id, "Zakupiono %s", ItemyCT[6][_Opis]); 
-					ColorChat(id, GREEN, "[Sklep]^x01 Wykorzystano ^x04%i/%i^x01 tego przedmiotu.", g_perkUsed[id]++, is_vip(id) ? VIP_UNLIMITED_LIMIT : VIPPLUS_UNLIMITED_LIMIT)
-					unAmmo[id] = true;
-					set_user_clip(id, 31)
-					} else {
-					ColorChat(id, GREEN, "[Sklep]^x01 Brakuje Ci^x04 %i $^x01 aby kupic^x03 %s", ItemyCT[6][_Cena]-((ItemyCT[6][_Cena]/100)*g_priceReduction[id]) - money, ItemyCT[6][_Opis])
-				}
-			}
-		}
-	}
-	return PLUGIN_CONTINUE;
-}
-public UnlimitedAmmo(id)
-{
-	if (!is_user_alive(id) || !unAmmo[id]) return 0
-	
-	set_user_clip(id, 31)
-	
-	return 0
-}
-public Fwd_PlayerSpawn_Post(id){ 
-	if (is_user_alive(id)){
-		unAmmo[id] = false;
-	}
-} 
-stock Reduce(id, amount)
-	cs_set_user_money(id, cs_get_user_money(id) - amount)
 
-stock set_user_clip(id, ammo)
-{
-	new weaponname[32], weaponid = -1, weapon = get_user_weapon(id, _, _)
-	get_weaponname(weapon, weaponname, 31)
-	while ((weaponid = engfunc(EngFunc_FindEntityByString, weaponid, "classname", weaponname)) != 0)
-		if (pev(weaponid, pev_owner) == id)
-	{
-		set_pdata_int(weaponid, 51, ammo, 4)
-		return weaponid
-	}
-	return 0
-}
-/* Set user to survivor */
 stock set_user_human(id)
 {
 	cure_user(id)
@@ -471,7 +553,19 @@ stock set_user_human(id)
 	cs_reset_user_model(id)
 }
 
-/* ConnorMcLeod by BeasT */
+stock set_user_clip(id, ammo)
+{
+	new weaponname[32], weaponid = -1, weapon = get_user_weapon(id, _, _)
+	get_weaponname(weapon, weaponname, 31)
+	while ((weaponid = engfunc(EngFunc_FindEntityByString, weaponid, "classname", weaponname)) != 0)
+		if (pev(weaponid, pev_owner) == id)
+	{
+		set_pdata_int(weaponid, 51, ammo, 4)
+		return weaponid
+	}
+	return 0
+}
+
 Remove_User_Nvgs(id)
 {
 new iNvgs = get_pdata_int(id, OFFSET_NVGOGGLES, 5)
@@ -488,7 +582,35 @@ if( iNvgs & USES_NVGS )
 	emessage_end()
 }
 set_pdata_int(id, OFFSET_NVGOGGLES, 0, 5)
-}  
-/* AMXX-Studio Notes - DO NOT MODIFY BELOW HERE
-*{\\ rtf1\\ ansi\\ deff0{\\ fonttbl{\\ f0\\ fnil Tahoma;}}\n\\ viewkind4\\ uc1\\ pard\\ lang11274\\ f0\\ fs16 \n\\ par }
-*/
+}
+
+NotEnoughMoney( id )
+{
+    client_print(id, print_center, "Nie masz kasy.");
+
+    message_begin(MSG_ONE_UNRELIABLE, g_iBlinkAcct, .player=id);
+    {
+        write_byte(2);
+    }
+    message_end();
+}
+
+Cannot_Carry_Anymore( id )
+{
+    client_print(id, print_center, "Masz pelny ekwipunek.");
+}
+
+Met_Item_Threshold( id )
+{
+    client_print(id, print_center, "Nie mozesz kupic wiecej w tej rundzie.");
+} 
+
+Cant_When_Alive( id )
+{
+    client_print(id, print_center, "Tylko gdy jestes martwy!");
+}
+
+Not_A_VipPlayer( id )
+{
+    client_print(id, print_center, "Przedmiot zarezerwowany dla graczy VIP.");
+}

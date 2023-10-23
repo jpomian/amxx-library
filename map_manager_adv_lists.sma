@@ -2,12 +2,14 @@
 #include <map_manager>
 
 #define PLUGIN "Map Manager: Advanced lists"
-#define VERSION "0.0.5"
+#define VERSION "0.1.0"
 #define AUTHOR "Mistrick"
 
 #pragma semicolon 1
 
 #define MAX_MAPLISTS 16
+
+#define get_num(%0) get_pcvar_num(g_pCvars[%0])
 
 new const FILE_MAP_LISTS[] = "maplists.ini";
 
@@ -24,17 +26,32 @@ enum _:MapListInfo {
     FileList[128]
 };
 
+enum Cvars {
+    SHOW_LIST_NAME
+};
+
+new g_pCvars[Cvars];
+
 new Array:g_aLists;
 new Array:g_aActiveLists;
 new Array:g_aMapLists[MAX_MAPLISTS];
 
+new Trie:g_tMapPull;
+new g_sCurMap[MAPNAME_LENGTH];
+
 public plugin_init()
 {
-    register_plugin(PLUGIN, VERSION, AUTHOR);
+    register_plugin(PLUGIN, VERSION + VERSION_HASH, AUTHOR);
+
+    g_pCvars[SHOW_LIST_NAME] = register_cvar("mapm_show_list_name_in_vote", "0");
+
     mapm_block_load_maplist();
 }
 public plugin_natives()
 {
+    g_tMapPull = TrieCreate();
+    get_mapname(g_sCurMap, charsmax(g_sCurMap));
+
     register_library("map_manager_adv_lists");
 
     register_native("mapm_advl_get_active_lists", "native_get_active_lists");
@@ -89,6 +106,8 @@ public plugin_cfg()
 
     new list_info[MapListInfo];
     new text[256], name[32], start[8], stop[8], file_list[128], clr[4], i = 0;
+    new bool:have_any = false, time[1440 + 1];
+
     while(!feof(f)) {
         fgets(f, text, charsmax(text));
         trim(text);
@@ -103,9 +122,23 @@ public plugin_cfg()
 
         if(!start[0] || equal(start, "anytime")) {
             list_info[AnyTime] = true;
+            have_any = true;
         } else {
             list_info[StartTime] = get_int_time(start);
             list_info[StopTime] = get_int_time(stop);
+
+            if(list_info[StartTime] > list_info[StopTime]) {
+                for(new i = list_info[StartTime]; i <= 1440; i++) {
+                    time[i] = 1;
+                }
+                for(new i = 0; i <= list_info[StopTime]; i++) {
+                    time[i] = 1;
+                }
+            } else {
+                for(new i = list_info[StartTime]; i <= list_info[StopTime]; i++) {
+                    time[i] = 1;
+                }
+            }
         }
 
         // load maps from file to local list
@@ -127,12 +160,31 @@ public plugin_cfg()
     }
     fclose(f);
 
-    if(!ArraySize(g_aLists)) {
+    new size = ArraySize(g_aLists);
+
+    if(!size) {
         // pause plugin?
         log_amx("nothing loaded.");
     } else {
         task_check_list();
         set_task(60.0, "task_check_list", TASK_CHECK_LIST, .flags = "b");
+
+        if(!have_any) {
+            new start = -1, s[8], e[8];
+            for(new i; i < 1440; i++) {
+                if(start == -1 && !time[i]) {
+                    start = i;
+                }
+                if(start != -1 && (time[i + 1] || (i + 1) == 1440)) {
+                    get_string_time(start, s, charsmax(s));
+                    get_string_time(i, e, charsmax(e));
+
+                    log_amx("WARN: you have time without active maplist %s-%s", s, e);
+
+                    start = -1;
+                }
+            }
+        }
     }
 }
 public task_check_list()
@@ -184,16 +236,48 @@ public task_check_list()
     if(reload) {
         ArrayDestroy(g_aActiveLists);
         g_aActiveLists = temp;
+        TrieClear(g_tMapPull);
         for(new i, item, size = ArraySize(g_aActiveLists); i < size; i++) {
             item = ArrayGetCell(g_aActiveLists, i);
             ArrayGetArray(g_aLists, item, list_info);
+            push_maps_to_pull(g_aMapLists[item], list_info[ListName]);
             log_amx("loaded new maplist ^"%s^"", list_info[FileList]);
             mapm_load_maplist(list_info[FileList], list_info[ClearOldList], i != size - 1);
         }
+    }
+}
+public mapm_displayed_item_name(type, item, name[])
+{
+    if(!get_num(SHOW_LIST_NAME)) {
+        return 0;
+    }
+
+    if(equali(name, g_sCurMap)) {
+        return 0;
+    }
+
+    if(TrieKeyExists(g_tMapPull, name)) {
+        new list_name[32];
+        TrieGetString(g_tMapPull, name, list_name, charsmax(list_name));
+        mapm_set_displayed_name(item, fmt("%s\y[%s]", name, list_name));
+    }
+
+    return 0;
+}
+push_maps_to_pull(Array:array, const list_name[])
+{
+    new map_info[MapStruct];
+    for(new i, size = ArraySize(array); i < size; i++) {
+        ArrayGetArray(array, i, map_info);
+        TrieSetString(g_tMapPull, map_info[Map], list_name);
     }
 }
 get_int_time(string[])
 {
     new left[4], right[4]; strtok(string, left, charsmax(left), right, charsmax(right), ':');
     return str_to_num(left) * 60 + str_to_num(right);
+}
+get_string_time(time, out[], size)
+{
+    formatex(out, size, "%02d:%02d", time / 60, time % 60);
 }

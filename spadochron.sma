@@ -8,7 +8,7 @@ native is_user_zombie(id)
 #define _VERSION             "1.6"
 #define _AUTHOR           "H.RED.ZONE + mixtaz"
 
-#define PARACHUTE_MODEL_CT "models/biohazard/umbrellaparachute.mdl"
+#define PARACHUTE_MODEL_CT "models/parachute.mdl"
 #define PARACHUTE_MODEL_ZOMBIE "models/biohazard/skrzydla.mdl"
 
 #define MAX_PLAYERS    32

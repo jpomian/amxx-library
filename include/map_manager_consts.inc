@@ -3,12 +3,15 @@
 #endif
 #define _map_manager_consts_included
 
+#define VERSION_HASH ""
+
 const MAPNAME_LENGTH = 32;
 
 enum _:MapStruct {
     Map[MAPNAME_LENGTH],
     MinPlayers,
-    MaxPlayers
+    MaxPlayers,
+    MapPriority
 };
 
 enum _:NomStruct {
@@ -48,7 +51,8 @@ enum {
     VOTE_BY_CMD,
     VOTE_BY_RTV,
     VOTE_BY_SCHEDULER,
-    VOTE_BY_SCHEDULER_SECOND
+    VOTE_BY_SCHEDULER_SECOND,
+    VOTE_BY_INCORRECT_ONLINE
 };
 
 // used as return value in forward "mapm_analysis_of_results"
@@ -98,3 +102,12 @@ enum {
     NOMINATION_ALLOWED,
     NOMINATION_BLOCKED
 };
+
+enum MCustomItem {
+    Invalid_Custom_Item = -1
+};
+
+enum MCI_Type {
+    mci_before,
+    mci_after
+}
