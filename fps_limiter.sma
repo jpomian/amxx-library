@@ -1,6 +1,6 @@
 #include < amxmodx >
 
-#define PLUGIN_VERSION "1.0"
+#define PLUGIN_VERSION "1.1"
 
 #define TASK_FREQ 2.0 
 
@@ -30,7 +30,7 @@ public plugin_cfg( )
 
 public plugin_init( )
 {
-    register_plugin( "Fps Limit", PLUGIN_VERSION, "DoNii" );
+    register_plugin( "Fps Limit", PLUGIN_VERSION, "DoNii x Mixtaz" );
     register_cvar( "fps_limit_cvar", PLUGIN_VERSION, FCVAR_SERVER | FCVAR_SPONLY );
 }
 

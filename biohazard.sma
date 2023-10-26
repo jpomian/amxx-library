@@ -478,7 +478,8 @@ public client_disconnected(id)
 	if(fm_has_custom_model(id))
 		fm_remove_model_ents(id)
 
-	CheckWinConditions();
+	if(!is_user_alive(id) && g_gamestarted)
+		CheckWinConditions();
 }
 
 public cmd_jointeam(id)
@@ -2002,42 +2003,38 @@ public native_set_user_kbimmunity(id, Float:fReduction, bool:bUserCrouched)
 		g_kbReduction[id] = fReduction;
 }
 
-CheckWinConditions()
+public CheckWinConditions()
 {
-    new iZombies[32], iZombieNum
-    new iHumans[32], iHumanNum
- 
-    get_players(iZombies, iZombieNum, "ae", "TERRORIST")
-    get_players(iHumans, iHumanNum, "ae", "CT")
- 
-    if(iHumanNum <= 0)
-    {
-		for(new i = 1; i <= g_maxplayers; i++) { 
-
-			if(!is_user_alive(i))
-				continue;
-
-			user_silentkill(i, 1)
+	static zmCount, ctCount
+	for(new i=0; i<= g_maxplayers; i++)
+	{
+		if(is_user_connected(i))
+		{
+			if(g_zombie[i])
+				zmCount++;
+			else
+				ctCount++;
 		}
+	}
+
+	if(zmCount == 0)
+	{
+		for(new i=0; i<= g_maxplayers; i++) user_silentkill(i, 1)
 
 		set_dhudmessage(225, 0, 0, -1.0, 0.3, 2, 0.01, 3.0, 0.05, 0.05)
 		show_dhudmessage(0, "Zombie przejelo kontrole nad swiatem.")
 		g_zombieswon = true;
-    }
-    else if(iZombieNum <= 0)
-    {
-		for(new i = 1; i <= g_maxplayers; i++) { 
+	}
 
-			if(!is_user_alive(i))
-				continue;
+	if(ctCount == 0)
+	{
+		for(new i=0; i<= g_maxplayers; i++) user_silentkill(i, 1)
 
-			user_silentkill(i, 1)
-		}
-		
 		set_dhudmessage(0, 100, 200, -1.0, 0.3, 2, 0.01, 3.0, 0.05, 0.05)
 		show_dhudmessage(0, "Ludzie przezyli apokalipse.")
 		g_humanswon = true;
-    }
+	}
+
 }
 
 MessageScreenFade(const id, const Float:fInTime, const Float:fHoldTime, const Float:fOutTime, const iRed, const iGreen, const iBlue, const iAlpha)

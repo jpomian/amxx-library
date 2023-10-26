@@ -123,9 +123,8 @@ public round_start() {
 
 public client_authorized(id)
 {
-
     g_iDiscount[id] = is_vip(id) ? VIP_BONUS : 0;
-    
+    get_rank_order(id);
 }
 public cmdShopDirect(id)
 {
