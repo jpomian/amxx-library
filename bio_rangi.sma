@@ -8,8 +8,12 @@
 
 #define TASK_REFRESHRATE 0.5
 
+native get_user_infections(id);
+native get_hpdivider();
+
 new ranga[33] = 0
 new sync
+new hpdiv
 
 const MAX_PLAYER = 32;
 
@@ -28,7 +32,11 @@ public plugin_init(){
 	
 	register_event("StatusValue", "pokazStatus", "be", "1=2", "2!0")
 	register_event("StatusValue", "ukryjStatus", "be", "1=1", "2=0")
+
+	hpdiv = get_hpdivider();
 	
+	register_clcmd("say /remove", "remove_kill")
+
 }
 
 public plugin_natives()
@@ -43,6 +51,14 @@ public client_authorized(id)
 {
 	set_task(TASK_REFRESHRATE,"rank",TASK+id,_,_,"b")
 	ranga[id] = 0;
+}
+
+public remove_kill(id)
+{
+	new stats[8], body[8]
+	get_user_stats(id, stats, body)
+
+	stats[0] -= 3;
 }
 
 public client_disconnected(id) {
@@ -108,8 +124,8 @@ public pokazStatus(id)
 
 public rank(id) {
 	
-	new stats[8], body[8],name[33];
-	new target;
+	new stats[8], body[8], name[33];
+	new target, iRankPos;
 
 	id-=TASK
 	
@@ -132,11 +148,12 @@ public rank(id) {
 			ranga[id]++
 		
 		sync = CreateHudSyncObj()
+		iRankPos = get_user_stats(target, stats, body)
 		
 		if(is_user_alive(id)) {
 			if(is_user_zombie(id)){
 				set_hudmessage(250, 100, 0, 0.03, 0.93, _, TASK_REFRESHRATE+0.1, TASK_REFRESHRATE+0.1)
-				ShowSyncHudMsg(id, sync, "Zycie: %i", get_user_health(id));
+				ShowSyncHudMsg(id, sync, "Zycie: %i^tInfekcje: %i (+%i HP)", get_user_health(id), get_user_infections(id), (get_user_infections(id)/hpdiv));
 			}
 			else {
 				set_hudmessage(250 , 100 , 0, -1.0, 0.90, _, TASK_REFRESHRATE+0.1, TASK_REFRESHRATE+0.1)
@@ -145,7 +162,7 @@ public rank(id) {
 		}
 		else if(target) {
 			set_hudmessage(162, 101, 31, 0.65, -1.0, _, TASK_REFRESHRATE+0.1, TASK_REFRESHRATE+0.1)
-			ShowSyncHudMsg(id, sync, "Nick: %s (%i HP)^nZabojstwa: %d/%d (%s)^nKD: %.2f", name, get_user_health(target), stats[0], wymagania[ranga[target]], nazwa[ranga[target]], get_user_kdratio(target));
+			ShowSyncHudMsg(id, sync, "%s | %s (%i HP)^nZabójstwa: %d/%d^nInfekcje: %i (+%i HP)^nPozycja w rankingu: %i", nazwa[ranga[target]], name, get_user_health(target), stats[0], wymagania[ranga[target]], get_user_infections(target), (get_user_infections(target)/hpdiv), iRankPos);
 		}
 	}
 }

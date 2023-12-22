@@ -132,9 +132,7 @@ public LoadSounds(){
 			parse(g_Line, g_SoundPath, charsmax(g_SoundPath), g_Name, charsmax(g_Name), g_Team, charsmax(g_Team));
 			
 			new g_Value = strlen(g_SoundPath) - 4;
-			
-			log_amx("Path: %s | Title: %s | Team: %s | Format: %s", g_SoundPath, g_Name, g_Team, g_SoundPath[ g_Value ]);
-			
+						
 			if(equal(g_SoundPath[ g_Value ], ".mp3") || equal(g_SoundPath[ g_Value ], ".wav")){
 				if(equal(g_SoundPath[ g_Value ], ".mp3")){
 					format(g_SoundPath, charsmax(g_SoundPath), "sound/%s", g_SoundPath);

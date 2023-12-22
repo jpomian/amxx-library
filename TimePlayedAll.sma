@@ -89,7 +89,7 @@ public plugin_init( )
 	CC_SetPrefix( "^4[Konkurs]" );
 	
 	g_cSaveMethod = register_cvar( "tp_save_method", "1" ) // How to save player's preferences: 0 = nVault | 1 = MySQL | 2 = SQLite
-	// g_cSaveType = register_cvar( "tp_save_type", "2" ) // ; Save player's data:  0 = Name | 1= IP | 2 = SteamID
+	// g_cSaveType = register_cvar( "tp_save_type", "2" ) // ; Savve player's data:  0 = Name | 1= IP | 2 = SteamID
 	
 	register_event( "SayText", "OnSayText", "a", "2=#Cstrike_Name_Change" )
 	

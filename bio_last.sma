@@ -7,7 +7,10 @@
  
 #define ForPlayers(%1) for(new %1 = 1; %1 <= 32; %1++)
  
+<<<<<<< HEAD
+=======
 static const PlayersThreshold = 5;
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 static const SoundPath[] = "zombie/last.wav";
 static const HealthAmount = 250;
 static const DefaultHealth = 2000;
@@ -47,6 +50,11 @@ public player_spawned(index)
 
 public player_death()
 {
+<<<<<<< HEAD
+
+        new last_ct = get_last_alive(),
+        alive_tts = get_alive(2);
+=======
         new players = get_playersnum();
  
         // Not enough players on server.
@@ -57,6 +65,7 @@ public player_death()
  
         new last_ct = get_last_alive(),
                 alive_tts = get_alive(2);
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
  
         // More than one CT.
         if(!is_user_connected(last_ct))
@@ -64,6 +73,26 @@ public player_death()
                 return;
         }
  
+<<<<<<< HEAD
+        set_dhudmessage(185, 48, 48, -1.0, 0.21, 1, 6.0, 3.0);
+        
+        if(alive_tts > 0) {
+        // if(alive_tts == 1)
+        // {
+        //        show_dhudmessage(0, "Zombie VS CT!^nPolowanie - schodzimy z kamp i wysokosci!");
+                
+        //         emit_sound(0, CHAN_VOICE, SoundPath, 1.0, ATTN_NORM, 0, PITCH_NORM);
+ 
+        //         if(!items_given[last_ct][ITEMS_ONE_VS_ONE])
+        //         {
+
+        //                 get_user_health(last_ct) >= DefaultHealth ? set_user_health(last_ct, get_user_health(last_ct) + HealthAmount) : set_user_health(last_ct, DefaultHealth + HealthAmount);
+ 
+        //                 items_given[last_ct][ITEMS_ONE_VS_ONE] = true;
+        //         }
+        // }
+        if(alive_tts > 1)
+=======
         set_dhudmessage(185, 48, 48, -1.0, 0.16, 1, 6.0, 3.0);
         
         if(alive_tts > 0) {
@@ -82,6 +111,7 @@ public player_death()
                 }
         }
         else
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
         {
                 new postfix[10],
                         last_ct_name[32];

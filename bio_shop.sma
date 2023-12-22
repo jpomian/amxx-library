@@ -17,6 +17,9 @@
 #define VIP_BONUS 5
 #define ItemRegister(%1,%2,%3) formatex(%1, charsmax(%1), "%s \r [\y%i $\r]", %2, %3-((%3/100)*g_iDiscount[id]))
 #define RestrictedItemRegister(%1,%2,%3,%4,%5) formatex(%1, charsmax(%1), "%s \r [\y%i $\r] \d(%i/%i)", %2, %3-((%3/100)*g_iDiscount[id]), %4, %5)
+#define isNotElligible(%1) (!is_user_alive(%1) || !game_started())
+
+#define write_coord_f(%1) engfunc(EngFunc_WriteCoord,%1)
 
 
 native give_user_napalmnade(id);
@@ -39,6 +42,7 @@ new g_iBlinkAcct, gmsgNVGToggle, maxplayers;
 new g_hasConsumed[33][ITEM_TYPE];
 new g_iDiscount[33];
 new bool: unAmmo[33], bool:g_bNotified[33] = false;
+new sprPlus;
 
 
 new g_szItemsTT[][] = 
@@ -53,8 +57,8 @@ new g_szItemsTT[][] =
 
 new g_iItemsPricesTT[] = 
 {
-    2000,
-    2500,
+    3000,
+    4000,
     8000,
     12000,
     14000,
@@ -111,11 +115,14 @@ public plugin_init() {
 
     register_event("CurWeapon", "UnlimitedAmmo", "be", "1=1")
 
+    register_clcmd("chooseteam", "cmdShopDirect");
+
 }
 
 public plugin_precache()
 {
-	precache_sound(g_hardscream);
+    precache_sound(g_hardscream);
+    sprPlus = precache_model("sprites/heal.spr");
 }
 
 public round_start() {
@@ -142,7 +149,7 @@ public cmdShopDirect(id)
 
     is_user_zombie(id) ? cmdShopTT(id) : cmdShopCT(id);
     
-    if(!g_bNotified[id])
+    if(!g_bNotified[id] && iRank > 0)
     {
         ColorChat(id, GREEN, "[Sklep]^x01 Zaaplikowano znizke dla rangi:^x04 %s^x01. Poziom znizki: ^x04%i%%%%^x01.", szRank, iRank)
         g_bNotified[id] = true;
@@ -218,6 +225,8 @@ public handler_ShopMenuTT(id, menu, item)
     new itemAdjustedPrice = g_iItemsPricesTT[item] - (g_iItemsPricesTT[item]/100)*g_iDiscount[id]
     new money = cs_get_user_money(id);
     new new_money = cs_get_user_money(id) - itemAdjustedPrice;
+
+    set_dhudmessage(225, 0, 0, -1.0, 0.7, 2, 0.01, 3.0, 0.02, 0.02)
     
     if( money < itemAdjustedPrice )
     {
@@ -234,14 +243,20 @@ public handler_ShopMenuTT(id, menu, item)
                 {
                     Met_Item_Threshold( id );
                 }
+                else if(isNotElligible(id))
+                {
+                    MustMeetRequirements( id );
+                }
                 else {
                     set_user_health(id, get_user_health(id) + 500)
 
                     g_hasConsumed[id][HP]++;
                 
-                    client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                    show_dhudmessage(id, "Zakupiono (%s)", g_szItemsTT[item])
 
                     cs_set_user_money(id, new_money);
+
+                    show_healsprite(id)
                 }
         }
         case 1: 
@@ -259,41 +274,49 @@ public handler_ShopMenuTT(id, menu, item)
 
                     g_hasConsumed[id][RESP]++;
                 
-                    client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                    show_dhudmessage(id, "Zakupiono (%s)", g_szItemsTT[item])
 
                     cs_set_user_money(id, new_money);
+
+                    set_task(1.5, "Give_Players_Info", id);
                 }
         }
         case 2:
-        {
-            
+            {
+                if(isNotElligible(id))
+                {
+                    MustMeetRequirements( id );
+                }   
                 set_user_gravity(id, 0.375)
                 set_user_kbimmunity(id, 0.5, false)
                 set_task(5.0, "cease_lesser_effect", id)
 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsTT[item])
                 
                 cs_set_user_money(id, new_money);
         }
         case 3:
         {
+                if(isNotElligible(id))
+                {
+                    MustMeetRequirements( id );
+                } 
                 set_user_kbimmunity(id, 1.0, true)
                 give_user_effects(id)
                 set_task(5.0, "cease_full_effect", id)
 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsTT[item])
                 
                 cs_set_user_money(id, new_money);
         }
         case 4:
         {
-
                 get_user_zombiemadness(id)
                 set_user_kbimmunity(id, 1.0, false)
 
                 set_task(5.0, "cease_full_effect", id)
 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsTT[item])
                 
                 cs_set_user_money(id, new_money);
         }
@@ -302,8 +325,7 @@ public handler_ShopMenuTT(id, menu, item)
             if(check_prerequisities(id)) {
 
                 set_user_human(id)
-                
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsTT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsTT[item])
                 
                 cs_set_user_money(id, new_money);
             }
@@ -329,11 +351,19 @@ public handler_ShopMenuCT(id, menu, item)
     new itemAdjustedPrice = g_iItemsPricesCT[item] - (g_iItemsPricesCT[item]/100)*g_iDiscount[id]
     new money = cs_get_user_money(id);
     new new_money = cs_get_user_money(id) - itemAdjustedPrice;
+
+    set_dhudmessage(0, 0, 200, -1.0, 0.7, 2, 0.01, 3.0, 0.02, 0.02)
     
     if( money < itemAdjustedPrice )
     {
         NotEnoughMoney( id );
         menu_display(id, menu);
+        return PLUGIN_HANDLED;
+    }
+
+    if(isNotElligible(id))
+    {
+        MustMeetRequirements( id );
         return PLUGIN_HANDLED;
     }
     
@@ -348,7 +378,7 @@ public handler_ShopMenuCT(id, menu, item)
             else {
                 give_item(id, "weapon_hegrenade");
                 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsCT[item]);
                 
                 cs_set_user_money(id, new_money);
             }
@@ -362,7 +392,7 @@ public handler_ShopMenuCT(id, menu, item)
             else {
                 give_item(id, "weapon_smokegrenade");
                 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsCT[item]);
                 
                 cs_set_user_money(id, new_money);
             }
@@ -376,7 +406,7 @@ public handler_ShopMenuCT(id, menu, item)
             else {
                 give_user_napalmnade( id )
                 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsCT[item]);
                 
                 cs_set_user_money(id, new_money);
             }
@@ -391,7 +421,7 @@ public handler_ShopMenuCT(id, menu, item)
             {
                 give_item(id, "weapon_flashbang");
                 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsCT[item]);
                 
                 cs_set_user_money(id, new_money);
             }
@@ -405,7 +435,7 @@ public handler_ShopMenuCT(id, menu, item)
             else {
                 cs_set_user_nvg(id, 1)
                 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsCT[item]);
                 
                 cs_set_user_money(id, new_money);
             }
@@ -420,7 +450,7 @@ public handler_ShopMenuCT(id, menu, item)
 				case 1: give_item(id, "weapon_sg550")
 			}
                 
-            client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+            show_dhudmessage(id, "Zakupiono (%s)", g_szItemsCT[item]);
                 
             cs_set_user_money(id, new_money);
         }
@@ -442,7 +472,7 @@ public handler_ShopMenuCT(id, menu, item)
 
                 set_user_clip(id, 31)
                 
-                client_print(id, print_center, "Zakupiono (%s)", g_szItemsCT[item]);
+                show_dhudmessage(id, "Zakupiono (%s)", g_szItemsCT[item]);
 
                 cs_set_user_money(id, new_money);
             }
@@ -481,6 +511,29 @@ public give_user_effects(id)
 	write_byte(3) // duration (will be randomized a bit)
 	message_end()
 	
+}
+
+public show_healsprite(id)
+{
+    new Float:fOrigin[3];
+ 
+    message_begin(MSG_BROADCAST, SVC_TEMPENTITY);
+    write_byte(TE_SPRITE);
+    write_coord_f(fOrigin[0]);
+    write_coord_f(fOrigin[1]);
+    write_coord_f(fOrigin[2]);
+    write_short(sprPlus);
+    write_byte(20);
+    write_byte(255);
+    message_end();
+}
+
+public Give_Players_Info(id)
+{
+    new szName[32];
+    get_user_name(id, szName, charsmax(szName))
+
+    ColorChat(0, RED, "[Biohazard]^x01 Zombie %s wrócił do zywych!", szName)
 }
 
 public UnlimitedAmmo(id)
@@ -586,7 +639,7 @@ set_pdata_int(id, OFFSET_NVGOGGLES, 0, 5)
 
 NotEnoughMoney( id )
 {
-    client_print(id, print_center, "Nie masz kasy.");
+    ColorChat(id, GREEN, "[Sklep]^x01 Nie masz na to kasy...")
 
     message_begin(MSG_ONE_UNRELIABLE, g_iBlinkAcct, .player=id);
     {
@@ -597,20 +650,25 @@ NotEnoughMoney( id )
 
 Cannot_Carry_Anymore( id )
 {
-    client_print(id, print_center, "Masz pelny ekwipunek.");
+    ColorChat(id, GREEN, "[Sklep]^x01 Masz pelny ekwipunek.")
 }
 
 Met_Item_Threshold( id )
 {
-    client_print(id, print_center, "Nie mozesz kupic wiecej w tej rundzie.");
+    ColorChat(id, GREEN, "[Sklep]^x01 Nie mozesz kupic wiecej w tej rundzie.")
 } 
 
 Cant_When_Alive( id )
 {
-    client_print(id, print_center, "Tylko gdy jestes martwy!");
+    ColorChat(id, GREEN, "[Sklep]^x01 Tylko gdy jestes martwy!")
 }
 
 Not_A_VipPlayer( id )
 {
-    client_print(id, print_center, "Przedmiot zarezerwowany dla graczy VIP.");
+    ColorChat(id, GREEN, "[Sklep]^x01 Przedmiot zarezerwowany dla graczy VIP.")
+}
+
+MustMeetRequirements( id )
+{
+    ColorChat(id, GREEN, "[Sklep]^x01 Poczekaj na rozpoczecie infekcji.")
 }

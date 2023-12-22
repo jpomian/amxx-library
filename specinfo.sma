@@ -63,7 +63,7 @@ public client_connect( id )
 	if( !is_user_bot( id ) )
 	{
 		if( get_pcvar_num( p_list_default ) ) cl_prefs[id] |= FL_LIST;
-		if( get_pcvar_num( p_immunity ) ) cl_prefs[id] |= FL_HIDE;
+		// if( get_pcvar_num( p_immunity ) ) cl_prefs[id] |= FL_HIDE;
 	}
 	get_user_name( id, cl_names[id], 20 );
 	return PLUGIN_CONTINUE;
@@ -106,7 +106,7 @@ public list_update( )
 				namelen = ( LIST_STR_LEN - 10 ) / count;
 				clamp( namelen, 10, 20 );
 				format( tmpname, namelen, cl_names[i] );
-				formatex( tmplist, LIST_STR_LEN - 1, "^t^t^t^t^t^t^t^t^t^t^t^t^t^t^t^t^t^t %s (%i) %s :^n", "%L", count, tmpname);
+				formatex( tmplist, LIST_STR_LEN - 1, "^t^t^t^t^t^t^t^t^t^t^t^t^t^t^t^t^t^t (%i) %s %s :^n", count, "%L", tmpname);
 				for( j=1; j<=count; j++ )
         {
 					format( tmpname, namelen, cl_names[spec_ids[i][j]]);

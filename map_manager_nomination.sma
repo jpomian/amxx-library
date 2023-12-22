@@ -541,9 +541,17 @@ public mapslist_handler(id, menu, item)
     
     if(g_iNomMaps[id] < get_num(MAPS_PER_PLAYER) || get_num(DONT_CLOSE_MENU)) {
         if(nominated == NOMINATION_SUCCESS) {
+<<<<<<< HEAD
+            client_print_color(id, print_team_default, "%s ^1%L", g_sPrefix, id, "MAPM_NOM_NOMINATED_LIST");
             format(item_name, charsmax(item_name), "%s[\y*\w]", item_name);
             menu_item_setname(menu, item, item_name);
         } else if(nominated == NOMINATION_REMOVED) {
+            client_print_color(id, print_team_default, "%s ^1%L", g_sPrefix, id, "MAPM_NOM_NOMINATED_LIST");
+=======
+            format(item_name, charsmax(item_name), "%s[\y*\w]", item_name);
+            menu_item_setname(menu, item, item_name);
+        } else if(nominated == NOMINATION_REMOVED) {
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
             menu_item_setname(menu, item, item_name);
         }
         menu_display(id, menu, item / 7);

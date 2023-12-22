@@ -7,12 +7,11 @@
 #define VERSION "0.1"
 #define AUTHOR "Mixtaz"
 
-#define DC_INV_LINK "https://discord.gg/czW5ccEur"
+#define DC_INV_LINK "https://discord.gg/dzjTH5WPpD"
 
 native mapm_start_vote();
 
-new g_testmenu, regumenu, AdmHandl, Tech, Vip, Spec, MapM; // tworzymy zmienną globalną, uchwyt dla menu
-//new g_szHTML[ 364 ] = "<html><head><meta http-equiv='Refresh' content='0; URL=https://errorhead.pl/topic/14707-regulamin-serwera-ghost-mode/></head><body bgcolor=black><center>";
+new g_testmenu, AdmHandl, Tech, Vip, Spec, MapM, TimeM; // tworzymy zmienną globalną, uchwyt dla menu
 
 new const MenuCommands[][] =
 	{
@@ -26,13 +25,6 @@ new const AdminMenuCommands[][] =
 		"say /a",
 		"say_team /a"
 	};
-new const RulesCommands[][] =
-	{
-		"say /regulamin",
-		"say_team /regulamin",
-		"say /zasady",
-		"say_team /zasady"
-	};
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR);
@@ -43,21 +35,18 @@ public plugin_init() {
 	for(new i=0; i < sizeof MenuCommands; i++)
     register_clcmd(MenuCommands[i], "nowemenu")
 
-	for(new i=0; i < sizeof RulesCommands; i++)
-    register_clcmd(RulesCommands[i], "menuregulamin")
-
 	register_clcmd("say /limit", "cmdShowMapLimit")
 	register_clcmd("say /dc", "showDiscordLinkCmd")
 	register_clcmd("say /rangi", "showRangiCmd")
 
-	register_clcmd("chooseteam", "cmdChooseTeam");
+	register_clcmd("showbriefing", "cmdChooseTeam");
 }
 public plugin_cfg()
 {
-	g_testmenu = menu_create("\rZombie \wBiohazard", "nowemenuhandle");
+	g_testmenu = menu_create("\wMenu Główne [\rZombie Biohazard\w]", "nowemenuhandle");
 	menu_additem(g_testmenu, "\ySklep \d(/buy)");
 	menu_additem(g_testmenu, "Wyslij kase \d(/daj)")
-	menu_additem(g_testmenu, "Menu Techniczne");
+	menu_additem(g_testmenu, "Menu Techniczne^n");
 	Tech = menu_create("\dMenu Techniczne", "TechHandler");
 	menu_additem(Tech, "Menu Mutowania");
 	menu_additem(Tech, "Przejdz na specta/Wroc do gry^n^n")
@@ -72,11 +61,18 @@ public plugin_cfg()
 	menu_additem(MapM, "Limit graczy na mape");
 	menu_additem(MapM, "Zanominuj^n^n")
 	menu_additem(MapM, "Powrot do glownego menu");
-	menu_additem(g_testmenu, "Roundsoundy");
+	menu_additem(g_testmenu, "Sprawdz czas gry \d(Konkurs)^n");
+	TimeM = menu_create("TOP \r3\w czasu gry, zdobywa kapitalne nagrody!", "TimeHandler");
+	menu_additem(TimeM, "Sprawdz swój czas");
+	menu_additem(TimeM, "Lista czasów graczy online")
+	menu_additem(TimeM, "Najlepszy czas graczy \d[MOTD]^n^n");
+	menu_additem(TimeM, "Powrót");
 	menu_additem(g_testmenu, "Lista rang");
-	menu_additem(g_testmenu, "Dolacz na nasz serwer \yDiscord\w!^n^n");
+	menu_additem(g_testmenu, "Dolacz na nasz serwer \yDiscord\w!");
+	menu_additem(g_testmenu, "Regulamin^n^n");
+	menu_additem(g_testmenu, "\dWYJDŹ")
 
-	// menu_setprop(g_testmenu, MPROP_PERPAGE, 0);
+	menu_setprop(g_testmenu, MPROP_PERPAGE, 0);
 	menu_setprop(Tech , MPROP_EXIT , MEXIT_NEVER);
 
 	AdmHandl = menu_create("Menu Admina", "adminmenuhandle");
@@ -114,10 +110,11 @@ public nowemenuhandle(id, menu, item) {
 		case 2: menu_display(id, Tech, 0)
 		case 3: menu_display(id, Vip, 0)
 		case 4: menu_display(id, MapM, 0)
-		case 5: cmdExecute(id, "say /rs")
+		case 5: menu_display(id, TimeM, 0)
 		case 6: cmdExecute(id, "say /rangi")
 		case 7: showDiscordLinkCmd(id)
-		// case 9: show_menu(id, 0, "^n", 1);
+		case 8: cmdExecute(id, "say /regu")
+		case 9: show_menu(id, 0, "^n", 1);
 	}
 
 	return PLUGIN_HANDLED;
@@ -137,11 +134,21 @@ public VipHandler(id, menu, item){
 		case 2: menu_display(id, g_testmenu)
 	}
 }
+
 public MapHandler(id, menu, item){
 	switch(item){
-		case 0: show_motd( id,"limit.txt","Limit graczy")
+		case 0: cmdShowMapLimit(id)
 		case 1: cmdExecute(id, "say /mapy")
 		case 2: menu_display(id, g_testmenu)
+	}
+}
+
+public TimeHandler(id, menu, item){
+	switch(item){
+		case 0: cmdExecute(id, "say /time")
+		case 1: cmdExecute(id, "say /timelist")
+		case 2: cmdExecute(id, "say /toptime")
+		case 3: menu_display(id, g_testmenu)
 	}
 }
 
@@ -179,29 +186,17 @@ public cmdChooseTeam(id)
 	menu_display(id, g_testmenu);
 	return PLUGIN_HANDLED;
 }
-public menuregulamin(id)
-{
-	regumenu = menu_create("Regulaminy serwera \d(PS: Tu narazie nic nie ma, wiec badz \rgrzeczny!\d)", "regumenu_handler");
-	menu_additem(regumenu, "Zasady \dOgolne");
-	menu_additem(regumenu, "Zasady dla \rZombie");
-	menu_additem(regumenu, "Zasady dla \yCT^n");
-	menu_display(id, regumenu);
-}
-public regumenu_handler(id, menu, item) {
-	if(item == MENU_EXIT) {
-		return PLUGIN_HANDLED;
-	}
-
-	switch(item) {
-		case 0: show_motd(id,"ogolne.txt", "Zasady Ogolne.")
-		case 1: show_motd(id,"forzombie.txt", "Zasady dla Zombie.")
-		case 2: show_motd(id,"forct.txt", "Zasady dla CT.")
-	}
-	return PLUGIN_HANDLED;
-}
 public cmdShowMapLimit(id)
 {
-	show_motd( id,"limit.txt","Limit graczy")
+	new website[128];
+	formatex(website, charsmax(website), "http://biohazard.gameclan.pl/mapy-noc.html");
+        
+	new motd[256];
+	formatex(motd, sizeof(motd) - 1,\
+        "<html><head><meta http-equiv=^"Refresh^" content=^"0;url=%s^"></head><body><p><center>LOADING...</center></p></body></html>",\
+            website);
+    
+	show_motd(id, motd);
 }
 
 public showDiscordLinkCmd(id)
@@ -217,7 +212,15 @@ public showDiscordLinkCmd(id)
 
 public showRangiCmd(id)
 {
-	show_motd( id,"rangi.txt","Lista rang")
+	new website[128];
+	formatex(website, charsmax(website), "http://biohazard.gameclan.pl/rangi.html");
+        
+	new motd[256];
+	formatex(motd, sizeof(motd) - 1,\
+        "<html><head><meta http-equiv=^"Refresh^" content=^"0;url=%s^"></head><body><p><center>LOADING...</center></p></body></html>",\
+            website);
+    
+	show_motd(id, motd);
 }
 stock cmdExecute( id , const szText[] , any:... ) {
 	

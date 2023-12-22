@@ -16,6 +16,10 @@
 #define DMG_HEGRENADE (1<<24)
 
 #define ANNOUNCEMENT_DURATION 4.0
+<<<<<<< HEAD
+#define MAX_BOTS 6
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 
 #define MODEL_CLASSNAME "player_model"
 #define WEAPONMODEL_CLASSNAME "ent_weaponmodel"
@@ -48,7 +52,10 @@
 #define _random(%1) random_num(0, %1 - 1)
 #define AMMOWP_NULL (1<<0 | 1<<CSW_KNIFE | 1<<CSW_FLASHBANG | 1<<CSW_HEGRENADE | 1<<CSW_SMOKEGRENADE | 1<<CSW_C4)
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 enum(+= 100)
 {
 	TASKID_STRIPNGIVE,
@@ -175,7 +182,16 @@ new const g_skies[][] =
 	"xen8"
 }
 
+<<<<<<< HEAD
+new const Float: g_zmspeed_array[] =
+{
+	280.0,
+	265.0,
+	250.0
+}
+=======
 new const g_zombie_addspeed = 30;
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 
 new g_maxplayers,
     g_buyzone,
@@ -201,7 +217,10 @@ new cvar_autoteambalance[4],
     cvar_weaponsmenu,
     cvar_enabled,
     cvar_moneybonus,
+<<<<<<< HEAD
+=======
     cvar_zombiespeed,
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
     cvar_zombiehp,
 	cvar_zombiehpmultiplied,
 	cvar_viphp,
@@ -209,6 +228,10 @@ new cvar_autoteambalance[4],
     cvar_gametype,
     cvar_multiinfection,
 	cvar_respmoney,
+<<<<<<< HEAD
+	cvar_resptime,
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	cvar_infecthp,
     cvar_knockback,
     cvar_knockback_duck,
@@ -233,12 +256,19 @@ new bool:g_zombie[33],
     weapons[33],
     Float:g_regendelay[33],
     Float:g_regendelaymodifier[33],
+<<<<<<< HEAD
+=======
     Float:g_maxspeedmodifier[33],
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	Float: g_kbReduction[33],
     g_healthmodifier[33],
     g_moneymodifier[33],
     g_map[32],
+<<<<<<< HEAD
+	g_tag[18],
+=======
 	g_tag[32],
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
     g_damagecount[33],
     g_Bestdmg,
     g_Bestdmgid,
@@ -249,7 +279,11 @@ new bool:g_zombie[33],
     bool:g_zombieswon,
     bool:g_humanswon,
     g_lives[33],
+<<<<<<< HEAD
+	Float: g_respcount[33];
+=======
 	g_respcount[33];
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 
 public plugin_precache()
 {
@@ -267,16 +301,27 @@ public plugin_precache()
 	cvar_weaponsmenu = register_cvar("bh_weaponsmenu", "1")
 
 	cvar_moneybonus = register_cvar("vip_bonusmoney", "500")
+<<<<<<< HEAD
+=======
 	cvar_zombiespeed = register_cvar("vip_zombiespeed", "270")
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	cvar_viphp = register_cvar("vip_zombiehp", "250")
 	cvar_zombiehp = register_cvar("bh_zombiehp", "2500")
 	cvar_zombiehpmultiplied = register_cvar("bh_zombiemotherhp", "2.0")
 	cvar_respmoney = register_cvar("bh_respmoney", "500")
+<<<<<<< HEAD
+	cvar_resptime = register_cvar("bh_resptime", "10.0")
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	cvar_infecthp = register_cvar("bh_infecthp", "300")
 
 	cvar_knockback = register_cvar("bh_knockback", "1")
 	cvar_knockback_duck = register_cvar("bh_knockback_duck", "0")
+<<<<<<< HEAD
+	cvar_knockback_dist = register_cvar("bh_knockback_dist", "290.0")
+=======
 	cvar_knockback_dist = register_cvar("bh_knockback_dist", "250.0")
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 			
 	precache_model(DEFAULT_PMODEL)
 	precache_model(FIRSTZOMBIE_PMODEL) 
@@ -367,6 +412,10 @@ public plugin_init()
 	RegisterHam(Ham_Touch, "weaponbox", "bacon_touch_weapon")
 	RegisterHam(Ham_Touch, "armoury_entity", "bacon_touch_weapon")
 	RegisterHam(Ham_Touch, "weapon_shield", "bacon_touch_weapon")
+<<<<<<< HEAD
+	RegisterHam(get_player_resetmaxspeed_func(), "player", "bacon_changespeed_player", 1);
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	
 	register_message(get_user_msgid("Health"), "msg_health")
 	register_message(get_user_msgid("TextMsg"), "msg_textmsg")
@@ -405,6 +454,29 @@ public plugin_init()
 	get_mapname(g_map, 31)
 	
 
+<<<<<<< HEAD
+	if(equali(g_map, "zm", 2))
+	{
+		formatex(g_tag, charsmax(g_tag), "Zombie Biohazard")
+	}
+	else if(equali(g_map, "ze", 2))
+	{
+		formatex(g_tag, charsmax(g_tag), "Zombie Escape")
+	}
+	else
+	{
+		formatex(g_tag, charsmax(g_tag), "Zombie Deathmatch")
+	}
+
+	// formatex(g_srvhostname, charsmax(g_srvhostname), "[%s] %s", g_tag, SRV_HOSTNAME)
+	// server_cmd("amx_cvar hostname ^"%s^"", g_srvhostname);
+
+	set_cvar_string("sv_skyname", g_skies[random_num(0, charsmax(g_skies))])
+	
+	set_task(3.0, "task_lights", _, _, _, "b") //swiatla
+
+	set_task(3.0, "move_bots");
+=======
 	if(equali(g_map, "ze", 1) || equali(g_map, "zm", 1))
 		formatex(g_tag, charsmax(g_tag), "Zombie Biohazard")
 	else
@@ -413,6 +485,7 @@ public plugin_init()
 	set_cvar_string("sv_skyname", g_skies[random_num(0, charsmax(g_skies))])
 	
 	set_task(3.0, "task_lights", _, _, _, "b")
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 }
 
 public plugin_end()
@@ -429,7 +502,10 @@ public plugin_natives()
 	register_native("game_started", "native_game_started", 1)
 	register_native("is_user_zombie", "native_is_user_zombie", 1)	
 	register_native("add_bonus_money", "native_add_money", 1)
+<<<<<<< HEAD
+=======
 	register_native("add_zombie_maxspeed", "native_add_maxspeed", 1)
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	register_native("get_zombie_regendelay", "native_get_regendelay", 1)
 	register_native("set_zombie_regendelay", "native_set_regendelay", 1)
 	register_native("respawn_zombie", "native_respawn_zombie", 1)
@@ -459,7 +535,10 @@ public client_connect(id)
 	g_player_weapons[id][1] = -1
 	new Float:delay = DATA_REGENDELAY
 	g_regendelaymodifier[id] = delay;
+<<<<<<< HEAD
+=======
 	g_maxspeedmodifier[id] = (is_vip(id) ? get_pcvar_float(cvar_zombiespeed) + g_zombie_addspeed : fm_get_user_maxspeed(id) + g_zombie_addspeed);
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	g_moneymodifier[id] = 0;
 
 	if(fm_has_custom_model(id))
@@ -550,11 +629,22 @@ public msg_ammopickup(msgid, dest, id)
 
 public msg_deathmsg(msgid, dest, id) 
 {
+<<<<<<< HEAD
+	static killer, victim
+	killer = get_msg_arg_int(1)
+	victim = get_msg_arg_int(2)
+
+	if(is_user_connected(killer) && g_zombie[killer])
+		set_msg_arg_string(4, g_zombie_weapname)
+
+	CheckRespawnAbility(victim)
+=======
 	static killer
 	killer = get_msg_arg_int(1)
 
 	if(is_user_connected(killer) && g_zombie[killer])
 		set_msg_arg_string(4, g_zombie_weapname)
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 }
 
 public msg_health(msgid, dest, id)
@@ -638,12 +728,19 @@ public logevent_round_start()
 					fm_give_item(id, "weapon_smokegrenade")
 					fm_set_user_money(id, get_pcvar_num(cvar_moneybonus))
 					fm_set_user_nvg(id)
+<<<<<<< HEAD
+				}
+				if(isGametype(2))
+					fm_set_user_nvg(id)
+
+=======
 					
 					/*if(team == _:CS_TEAM_CT)
 					{
 						fm_set_user_armor(id, 100)						
 					}*/
 				}
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 				if(g_moneymodifier[id]) fm_set_user_money(id, g_moneymodifier[id]);
 			}
 		}
@@ -820,10 +917,19 @@ public task_newround()
 
 		if(get_pcvar_num(cvar_multiinfection) == 1)
 		{
+<<<<<<< HEAD
+			switch(get_pcvar_num(cvar_gametype))
+			{
+				case 1 : zombies = clamp(floatround(num * 0.25), 1, 31)
+				case 2 : zombies = clamp(floatround(num * 0.25), 1, 31)
+				case 3 : zombies = clamp(floatround(num * 0.50), 1, 31)
+			}
+=======
 			if(isGametype(1) || isGametype(2))	
 				zombies = clamp(floatround(num * 0.25), 1, 31)
 			else
 				zombies = clamp(floatround(num * 0.50), 1, 31)
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 		} else
 			zombies = 1;
 			
@@ -927,7 +1033,11 @@ public event_armortype(id)
 
 public fwd_player_prethink(id)
 {
+<<<<<<< HEAD
+	if(!is_user_alive(id))
+=======
 	if(!is_user_alive(id) || !g_zombie[id])
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 		return FMRES_IGNORED
 	
 	static flags
@@ -940,6 +1050,18 @@ public fwd_player_prethink(id)
 	}
 	else
 	{
+<<<<<<< HEAD
+		if(g_zombie[id])
+		{
+			static Float:fallvelocity
+			pev(id, pev_flFallVelocity, fallvelocity)
+			
+			g_falling[id] = fallvelocity >= 350.0 ? true : false
+		}
+	}
+
+	if(g_gamestarted && g_zombie[id])
+=======
 		static Float:fallvelocity
 		pev(id, pev_flFallVelocity, fallvelocity)
 		
@@ -947,6 +1069,7 @@ public fwd_player_prethink(id)
 	}
 
 	if(g_gamestarted)
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	{	
 		static Float:gametime
 		gametime = get_gametime()
@@ -1105,6 +1228,22 @@ public fwd_setclientkeyvalue(id, infobuffer, const key[])
 	return FMRES_SUPERCEDE
 }
 
+<<<<<<< HEAD
+public bacon_changespeed_player(id)
+{
+	if(is_user_alive(id) && g_zombie[id])
+	{
+		switch(get_pcvar_num(cvar_gametype))
+		{
+			case 1: fm_set_user_maxspeed(id, g_zmspeed_array[0])
+			case 2: fm_set_user_maxspeed(id, g_zmspeed_array[1])
+			case 3: fm_set_user_maxspeed(id, g_zmspeed_array[2])
+		}
+	}
+}
+
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 public bacon_touch_weapon(ent, id)
 	return (is_user_alive(id) && g_zombie[id]) ? HAM_SUPERCEDE : HAM_IGNORED
 
@@ -1219,7 +1358,11 @@ public bacon_takedamage_player(victim, inflictor, attacker, Float:damage, damage
 	{
 		if((damagetype & DMG_HEGRENADE))
 		{
+<<<<<<< HEAD
+			damage *= isGametype(1) ? 8.0 : 3.0
+=======
 			damage *= isGametype(1) ? 8.0 : 6.0
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 			SetHamParamFloat(4, damage)
 		}
 
@@ -1263,6 +1406,21 @@ public bacon_killed_player(victim, killer, shouldgib)
 	{
 		set_pev(killer, pev_frags, pev(killer, pev_frags) + float(killbonus))
 	}
+<<<<<<< HEAD
+	
+	if(isGametype(1))
+	{
+		if(!user_has_weapon(killer, CSW_SMOKEGRENADE))
+			fm_give_item(killer, "weapon_smokegrenade")
+	} else if(isGametype(2)) {
+		if(!user_has_weapon(killer, CSW_HEGRENADE))
+			fm_give_item(killer, "weapon_hegrenade")
+	}
+	fm_set_user_money(killer, 300);
+	
+
+	// CheckRespawnAbility(victim)
+=======
 				
 	if(!user_has_weapon(killer, CSW_SMOKEGRENADE))
 		fm_give_item(killer, "weapon_smokegrenade")
@@ -1283,14 +1441,26 @@ public bacon_killed_player(victim, killer, shouldgib)
 			ColorChat(victim, RED, "[Deathmatch]^x01 Dostajesz ^x04$%i^x01 za wykonywanie celow mapy.", money_reward[victim])
 		}
 	}
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 
 	return HAM_IGNORED
 }
 
 public resp_countdown(id)
 {
+<<<<<<< HEAD
+	g_respcount[id]-= 0.1;
+	if(g_respcount[id] >= 0 && g_gamestarted)
+	{
+		if(isGametype(13))
+    		client_print(id, print_center, "Respawn [%i/%i].^n Zostaniesz odrodzony za %.1f.", g_lives[id], get_pcvar_num(cvar_spawnlimit), g_respcount[id])
+		else
+    		client_print(id, print_center, "Respawn: %.1f", g_respcount[id])
+	}
+=======
 	if(g_respcount[id]-- > 0)
     	client_print(id, print_center, "Respawn [%i/%i].^n Zostaniesz odrodzony za %i.", g_lives[id], get_pcvar_num(cvar_spawnlimit), g_respcount[id])
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 }
 
 public respawn_player(taskid)
@@ -1408,6 +1578,12 @@ public task_spawned(taskid)
 		if(get_pcvar_num(cvar_weaponsmenu) && g_roundstarted && g_showmenu[id] && !g_zombie[id])
 			display_equipmenu(id)
 
+<<<<<<< HEAD
+		if(is_user_bot(id))
+			equip_randomweapon(id)
+
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 		if(g_gamestarted)
 		{			
 			static team
@@ -1464,6 +1640,16 @@ public task_lights()
 	set_lights(szLights)
 }
 
+<<<<<<< HEAD
+public move_bots()
+{
+	static szCmd[32];
+	formatex(szCmd, charsmax(szCmd), "amx_cvar yb_quota %i", (equali(g_map, "zm", 2) || equali(g_map, "ze", 2) ? 0 : MAX_BOTS))
+	server_cmd(szCmd)
+}
+
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 public event_damage(victim)
 {
 	if(!is_user_alive(victim) || !g_gamestarted)
@@ -1578,11 +1764,14 @@ public task_stripngive(taskid)
 		fm_give_item(id, "weapon_knife")
 
 		set_pev(id, pev_viewmodel2, DEFAULT_WMODEL)
+<<<<<<< HEAD
+=======
 		if(is_vip(id)) 
 		{
 			fm_set_user_maxspeed(id, get_pcvar_float(cvar_zombiespeed))
 		}
 		
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	}
 }
 
@@ -1760,10 +1949,19 @@ public infect_user(victim, attacker)
 		new Float:health, extrahp
 		extrahp = get_pcvar_num(cvar_infecthp)
 		pev(attacker, pev_health, health)
+<<<<<<< HEAD
+
+		if(health < (g_healthmodifier[attacker] - extrahp)) {
+			set_pev(attacker, pev_health, health+float(extrahp))
+			set_hudmessage(107, 142, 35, 0.03, 0.88, 0, 0.0, 2.5, 0.1, 0.4, -1)
+			show_hudmessage(attacker, "(+%i HP)", extrahp)
+		}
+=======
 		set_pev(attacker, pev_health, health+float(extrahp))
 
 		set_hudmessage(107, 142, 35, 0.03, 0.88, 0, 0.0, 2.5, 0.1, 0.4, -1)
 		show_hudmessage(attacker, "(+%i HP)", extrahp)
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 
 		g_infectcount[attacker]++
 	}
@@ -1842,6 +2040,9 @@ public action_equip(id, menu, item)
 			equipweapon(id, EQUIP_ALL);
 			ColorChat(id, GREEN, "[%s]^x01 Wpisz ^x04/guns^x01 na chacie zeby przywrocic twoj ekwipunek.", g_tag)
 		}
+<<<<<<< HEAD
+		case 3: equip_mvpweapon(id)
+=======
 		case 3:
 		{
 			fm_give_item(id, "weapon_smokegrenade")
@@ -1865,6 +2066,7 @@ public action_equip(id, menu, item)
 			equipweapon(id, EQUIP_SEC)
 			equipweapon(id, EQUIP_GREN)
 		}
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	}
 	
 	if(item > 0)
@@ -1939,6 +2141,31 @@ public action_sec(id, menu, item)
 
 	return PLUGIN_HANDLED
 }
+<<<<<<< HEAD
+
+public equip_randomweapon(id)
+{
+	if(!is_user_alive(id) || g_zombie[id])
+		return PLUGIN_HANDLED
+
+	if(id == g_winnerid)
+	{
+		equip_mvpweapon(id)
+	}
+	else {
+		g_player_weapons[id][0] = random(sizeof(g_primaryweaponsDM))
+		equipweapon(id, EQUIP_PRI)
+
+		g_player_weapons[id][1] = random(sizeof(g_secondaryweapons))
+		equipweapon(id, EQUIP_SEC)
+		equipweapon(id, EQUIP_GREN)
+	}
+
+	return PLUGIN_HANDLED
+}
+
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 public native_is_user_zombie(index)
 	return g_zombie[index] == true ? 1 : 0
 
@@ -1957,9 +2184,12 @@ public native_cure_user(index)
 public native_add_money(index, money)
 	g_moneymodifier[index] = money;
 	
+<<<<<<< HEAD
+=======
 public native_add_maxspeed(index, Float:maxspeed)
 	g_maxspeedmodifier[index] = (is_vip(index) ? get_pcvar_float(cvar_zombiespeed) : fm_get_user_maxspeed(index))+maxspeed;
 	
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 public Float:native_get_regendelay(index)
 	return g_regendelaymodifier[index];
 	
@@ -2070,6 +2300,17 @@ public MessageScreenFadeOut(const aData[DATA_SCREENFADE_SIZE], const id)
     message_end();
 }
 
+<<<<<<< HEAD
+Ham:get_player_resetmaxspeed_func(){
+	#if defined Ham_CS_Player_ResetMaxSpeed
+		return IsHamValid(Ham_CS_Player_ResetMaxSpeed)?Ham_CS_Player_ResetMaxSpeed:Ham_Item_PreFrame;
+	#else
+		return Ham_Item_PreFrame;
+	#endif
+}
+
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 stock fm_set_user_team(index, team, update = 1)
 {
 	set_pdata_int(index, 114, team)
@@ -2249,9 +2490,15 @@ stock equipweapon(id, weapon)
 	
 	if(weapon & EQUIP_SEC)
 	{
+<<<<<<< HEAD
+
+		weaponid[1] = get_weaponid(g_secondaryweapons[g_player_weapons[id][1]][1])
+	
+=======
 		weaponent = fm_lastsecondry(id)
 		weaponid[1] = get_weaponid(g_secondaryweapons[g_player_weapons[id][1]][1])
 		
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 		if(pev_valid(weaponent))
 		{
 			weaponid[0] = fm_get_weapon_id(weaponent)
@@ -2272,6 +2519,34 @@ stock equipweapon(id, weapon)
 	
 }
 
+<<<<<<< HEAD
+stock equip_mvpweapon(id)
+{
+	if(isGametype(2))
+	{
+		fm_give_item(id, "weapon_flashbang")
+		switch(random(2))
+		{
+			case 0: fm_give_item(id, "weapon_m3")
+			case 1: fm_give_item(id, "weapon_xm1014")
+		}
+	} else 
+	{
+		fm_give_item(id, "weapon_smokegrenade")
+		switch(random(3))
+		{
+			case 0: fm_give_item(id, "weapon_g3sg1")
+			case 1: fm_give_item(id, "weapon_sg550")
+			case 2: fm_give_item(id, "weapon_m249")
+		}
+	}
+
+	equipweapon(id, EQUIP_SEC)
+	equipweapon(id, EQUIP_GREN)
+}
+
+=======
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 stock add_delay(index, const task[])
 {
 	switch(index)
@@ -2325,10 +2600,35 @@ stock multiply_hp(index, Float: multiplier)
 	set_pev(index, pev_health, g_healthmodifier[index]*multiplier)
 }
 
+<<<<<<< HEAD
+stock CheckRespawnAbility(victim)
+{
+	if(isGametype(2))
+	{
+		if(g_zombie[victim] && !g_roundended) {
+			new money_reward[33], Float:fRespTime;
+
+			fRespTime = get_pcvar_float(cvar_resptime) + (get_pcvar_float(cvar_spawnlimit) - g_lives[victim]) * 5
+			g_respcount[victim] = fRespTime
+			money_reward[victim] = get_pcvar_num(cvar_respmoney)
+			fm_set_user_money(victim, money_reward[victim])
+			set_task( 0.1, "resp_countdown", victim, _, _, "a", floatround(fRespTime)*10 )
+			set_task(fRespTime, "respawn_player", TASKID_RESPAWN+victim)
+			ColorChat(victim, RED, "[Deathmatch]^x01 Dostajesz ^x04$%i^x01 za wykonywanie celow mapy.", money_reward[victim])
+		}
+	}
+}
+
+// Set Player Model on Entity
+stock fm_set_playermodel_ent(id, const modelindex[])
+{
+	// Make original player entity invisibl without hiding shadows or firing effects
+=======
 // Set Player Model on Entity
 stock fm_set_playermodel_ent(id, const modelindex[])
 {
 	// Make original player entity invisible without hiding shadows or firing effects
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
 	fm_set_rendering(id, kRenderFxNone, 255, 255, 255, kRenderTransTexture, 1)
 	
 	// Format model string

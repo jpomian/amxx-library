@@ -38,13 +38,10 @@ public client_putinserver( id )
 	new bool:bCountryFound = sxgeo_country(szIP, szCountry, charsmax(szCountry), /*use lang serveer*/ szLanguage);
 	new bool:bRegionFound  = sxgeo_region (szIP, szRegion,  charsmax(szRegion),  /*use lang server*/ szLanguage);
 	new bool:bCityFound    = sxgeo_city   (szIP, szCity,    charsmax(szCity),    /*use lang server*/ szLanguage);
-	sxgeo_region_code(szIP, szCode, charsmax(szCode));
 	sxgeo_code(szIP, szShortCode);
 	
-	if(bCountryFound && bRegionFound)
-		ColorChat(0, TEAM_COLOR, "[System]^x01 %s^x04 [%s]^x01 wszedl na serwer.", szName, szCode);
-	else if(bCountryFound)
-		ColorChat(0, TEAM_COLOR, "[System]^x01 %s^x04 [%s]^x01 wszedl na serwer.", szName, szShortCode);
+	if(bCountryFound)
+		ColorChat(0, TEAM_COLOR, "[System] [%s]^x01 %s ^x01 wszedl na serwer.", szShortCode, szName);
 	else
 		ColorChat(0, TEAM_COLOR, "[System]^x01 %s^x04 [--]^x01 wszedl na serwer.", szName);
 		

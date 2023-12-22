@@ -859,10 +859,17 @@ public votemenu_handler(id, key)
 }
 show_dhud_info()
 {
+<<<<<<< HEAD
+    set_dhudmessage(128, 128, 128, -1.0, 0.4, 0, 0.0, 1.0, 0.1, 0.2);
+    show_dhudmessage(0, "Ostatnia runda");
+
+    set_dhudmessage(34, 139, 34, -1.0, 0.6, 0, 0.0, 1.0, 0.1, 0.2);
+=======
     set_dhudmessage(128, 128, 128, -1.0, 0.4, 0, 0.0, 1.0, 0.2, 0.3);
     show_dhudmessage(0, "Ostatnia runda");
 
     set_dhudmessage(34, 139, 34, -1.0, 0.6, 0, 0.0, 1.0, 0.2, 0.3);
+>>>>>>> 985935d1db32abb9dc50e5e377c8cba14e364ba9
     show_dhudmessage(0, "Wydaj pozostale pieniadze!");
 }
 add_item_votes(item, value)

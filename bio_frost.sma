@@ -6,7 +6,6 @@
 #include <biohazard>
 
 native get_player_modelent(id);
-//native give_user_knockbackimmunity(id, Float:time);
 
 new const VERSION[] = "2.14";
 
@@ -37,6 +36,8 @@ new const VERSION[] = "2.14";
 #define NT_FLASHBANG		(1<<0) // 1; CSW:25
 #define NT_HEGRENADE		(1<<1) // 2; CSW:4
 #define NT_SMOKEGRENADE		(1<<2) // 4; CSW:9
+
+#define FLAG_APPROVED ADMIN_IMMUNITY
 
 new const GRENADE_NAMES[][] = {
 	"weapon_hegrenade",
@@ -70,7 +71,7 @@ new pcv_enabled, pcv_override, pcv_nadetypes, pcv_teams, pcv_price, pcv_limit, p
 
 new maxPlayers, gmsgScreenFade, gmsgStatusIcon, gmsgBlinkAcct, gmsgAmmoPickup, gmsgTextMsg,
 		gmsgWeapPickup, glassGibs, trailSpr, smokeSpr, exploSpr, mp_friendlyfire, czero, bot_quota, czBotHams, fmFwdPPT,
-		fnFwdPlayerChilled, fnFwdPlayerFrozen, bool:roundRestarting;
+		fnFwdPlayerChilled, fnFwdPlayerFrozen, bool:roundRestarting, bool:g_isApproved[33] = false;
 
 new isChilled[33], isFrozen[33], frostKilled[33], novaDisplay[33], Float:glowColor[33][3], Float:oldGravity[33], oldRenderFx[33],
 		Float:oldRenderColor[33][3], oldRenderMode[33], Float:oldRenderAmt[33], hasFrostNade[33], nadesBought[33];
@@ -90,10 +91,10 @@ public plugin_init()
 	pcv_buyzone = register_cvar("fn_buyzone","0");
 	pcv_color = register_cvar("fn_color","0 75 125");
 
-	pcv_by_radius = register_cvar("fn_by_radius","20.0");
+	pcv_by_radius = register_cvar("fn_by_radius","40.0");
 	pcv_hitself = register_cvar("fn_hitself","0");
 	pcv_los = register_cvar("fn_los","1");
-	pcv_maxdamage = register_cvar("fn_maxdamage","30.0");
+	pcv_maxdamage = register_cvar("fn_maxdamage","10.0");
 	pcv_mindamage = register_cvar("fn_mindamage","1.0");
 	pcv_chill_maxchance = register_cvar("fn_chill_maxchance","100.0");
 	pcv_chill_minchance = register_cvar("fn_chill_minchance","100.0");
@@ -149,6 +150,7 @@ public plugin_init()
 	register_clcmd("say /frostnade","buy_frostnade");
 	register_clcmd("say_team /frostnade","buy_frostnade");
 	
+	
 	fnFwdPlayerChilled = CreateMultiForward("frostnades_player_chilled", ET_STOP, FP_CELL, FP_CELL);
 	fnFwdPlayerFrozen  = CreateMultiForward("frostnades_player_frozen",  ET_STOP, FP_CELL, FP_CELL);
 }
@@ -185,6 +187,9 @@ public client_putinserver(id)
 	
 	if(czero && !czBotHams && is_user_bot(id) && get_pcvar_num(bot_quota) > 0)
 		set_task(0.1,"czbot_hook_ham",id);
+
+	if(get_user_flags(id) & ADMIN_LEVEL_A)
+		g_isApproved[ id ] = true;
 }
 
 public client_disconnected(id)
@@ -393,7 +398,7 @@ public fw_setmodel(ent,model[])
 		set_pev(ent,pev_bInDuck,1); // flag it as a frostnade
 
 		new rgb[3], Float:rgbF[3];
-		get_rgb_colors(team,rgb);
+		get_rgb_colors(owner,rgb);
 		IVecFVec(rgb, rgbF);
 		
 		// glowshell
@@ -411,35 +416,6 @@ public fw_setmodel(ent,model[])
 // freeze a player in place whilst he's frozen
 public fw_playerprethink(id)
 {
-	/*if(isChilled[id])
-	{
-		// remember rendering changes
-		new fx = pev(id,pev_renderfx), Float:color[3], mode = pev(id,pev_rendermode), Float:amount;
-		pev(id,pev_rendercolor,color);
-		pev(id,pev_renderamt,amount);
-
-		if(fx != kRenderFxGlowShell)
-		{
-			oldRenderFx[id] = fx;
-			set_pev(id,pev_renderfx,kRenderFxGlowShell);
-		}
-		if(color[0] != glowColor[id][0] || color[1] != glowColor[id][1] || color[2] != glowColor[id][2])
-		{
-			oldRenderColor[id] = color;
-			set_pev(id,pev_rendercolor,glowColor[id]);
-		}
-		if(mode != kRenderNormal)
-		{
-			oldRenderMode[id] = mode;
-			set_pev(id,pev_rendermode,kRenderNormal);
-		}
-		if(amount != GLOW_AMOUNT)
-		{
-			oldRenderAmt[id] = amount;
-			set_pev(id,pev_renderamt,GLOW_AMOUNT);
-		}
-	}*/
-
 	if(isFrozen[id])
 	{
 		set_pev(id,pev_velocity,Float:{0.0,0.0,0.0}); // stop motion
@@ -701,7 +677,7 @@ public frostnade_explode(ent)
 	message_end();
 	
 	// explosion
-	create_blast(nadeTeam,nadeOrigin);
+	create_blast(owner,nadeOrigin);
 	emit_sound(ent,CHAN_ITEM,SOUND_EXPLODE,VOL_NORM,ATTN_NORM,0,PITCH_HIGH);
 
 	// cache our cvars
@@ -904,7 +880,7 @@ public task_remove_freeze(taskid)
 		status = STATUS_SHOW;
 		
 		new rgb[3];
-		get_rgb_colors(isChilled[id],rgb);
+		get_rgb_colors(id,rgb);
 		set_beamfollow(id,30,8,rgb,100);
 	}
 	
@@ -949,7 +925,7 @@ chill_player(id,attacker,nadeTeam)
 	set_task(duration,"task_remove_chill",TASK_REMOVE_CHILL+id);
 
 	new rgb[3];
-	get_rgb_colors(nadeTeam,rgb);
+	get_rgb_colors(attacker,rgb);
 	
 	IVecFVec(rgb, glowColor[id]);
 	
@@ -1052,7 +1028,7 @@ create_nova(id)
 
 	// make it translucent
 	new rgb[3];
-	get_rgb_colors(isFrozen[id], rgb);
+	for(new i=0; i<=maxPlayers; i++) get_rgb_colors(i,rgb);
 	IVecFVec(rgb, angles); // let's just use angles
 
 	set_pev(nova,pev_rendercolor,angles); // see above
@@ -1083,10 +1059,10 @@ unregister_prethink()
 }
 
 // make the explosion effects
-create_blast(team,Float:origin[3])
+create_blast(i, Float:origin[3])
 {
 	new rgb[3];
-	get_rgb_colors(team,rgb);
+	get_rgb_colors(i,rgb);
 
 	// smallest ring
 	message_begin_fl(MSG_PVS,SVC_TEMPENTITY,origin,0);
@@ -1200,7 +1176,7 @@ clear_beamfollow(ent)
 show_icon(id, status)
 {
 	static rgb[3];
-	if(status) get_rgb_colors(_:cs_get_user_team(id), rgb); // only get colors if we need to
+	if(status) get_rgb_colors(id, rgb); // only get colors if we need to
 	
 	message_begin(MSG_ONE,gmsgStatusIcon,_,id);
 	write_byte(status); // status (0=hide, 1=show, 2=flash)
@@ -1258,29 +1234,20 @@ player_has_frostnade(id)
 }
 
 // gets RGB colors from the cvar
-get_rgb_colors(team,rgb[3])
+get_rgb_colors(id,rgb[3])
 {
 	static color[12], parts[3][4];
-	get_pcvar_string(pcv_color,color,11);
 	
-	// if cvar is set to "team", use colors based on the given team
-	if(equali(color,"team",4))
+	if(g_isApproved[id])
 	{
-		if(team == 1)
-		{
-			rgb[0] = 150;
-			rgb[1] = 0;
-			rgb[2] = 0;
-		}
-		else
-		{
-			rgb[0] = 0;
-			rgb[1] = 0;
-			rgb[2] = 150;
-		}
+		rgb[0] = 255;
+		rgb[1] = 0;
+		rgb[2] = 127;
 	}
 	else
 	{
+		get_pcvar_string(pcv_color,color,11);
+
 		parse(color,parts[0],3,parts[1],3,parts[2],3);
 		rgb[0] = str_to_num(parts[0]);
 		rgb[1] = str_to_num(parts[1]);
