@@ -150,10 +150,6 @@ public LoadSounds(){
 					ArrayPushString(g_PathTT, g_SoundPath);
 					ArrayPushString(g_SoundNameTT, g_Name);
 				}
-				log_amx("File %s has a good format", g_SoundPath);
-			}
-			else{
-				log_amx("File %s has a bad format", g_SoundPath);
 			}
 		}
 	}

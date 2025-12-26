@@ -8,7 +8,8 @@
 
 #define TASK_REFRESHRATE 0.5
 
-native get_user_infections(id);
+native get_user_infections(id); // infekcje
+native get_user_kills(id);
 native get_hpdivider();
 
 new ranga[33] = 0
@@ -18,7 +19,7 @@ new hpdiv
 const MAX_PLAYER = 32;
 
 new const nazwa[][]={ "Bot","Szeregowy","Starszy Szeregowy","Kapral","Starszy Kapral","Plutonowy","Sierzant",
-"Starszy Sierzant","Chorazy","Sztabowy","Podporucznik","Porucznik","Kapitan", "Major", "Podpulkownik", "Pulkownik", "General Brygady", "General Dywizji", "General Broni", "Marszalek Zombie" }
+"Starszy Sierzant","Chorazy","Sztabowwy","Podporucznik","Porucznik","Kapitan", "Major", "Podpulkownik", "Pulkownik", "General Brygady", "General Dywizji", "General Broni", "Marszalek Zombie" }
 
 new const wymagania[]={ 10,25,50,100,250,450,700,1000,1500,2000,2500,3200,4500,6000,7750,10000,12500,15000,20000,-999 }
 
@@ -34,9 +35,6 @@ public plugin_init(){
 	register_event("StatusValue", "ukryjStatus", "be", "1=1", "2=0")
 
 	hpdiv = get_hpdivider();
-	
-	register_clcmd("say /remove", "remove_kill")
-
 }
 
 public plugin_natives()
@@ -51,14 +49,6 @@ public client_authorized(id)
 {
 	set_task(TASK_REFRESHRATE,"rank",TASK+id,_,_,"b")
 	ranga[id] = 0;
-}
-
-public remove_kill(id)
-{
-	new stats[8], body[8]
-	get_user_stats(id, stats, body)
-
-	stats[0] -= 3;
 }
 
 public client_disconnected(id) {
@@ -127,6 +117,8 @@ public rank(id) {
 	new stats[8], body[8], name[33];
 	new target, iRankPos;
 
+
+
 	id-=TASK
 	
 	ranga[id] = 0;
@@ -144,7 +136,7 @@ public rank(id) {
 			get_user_name(id,name,32)
 		}
 		
-		while(stats[0]>=wymagania[ranga[id]] && wymagania[ranga[id]]!=-999)
+		while(get_user_kills(id)>=wymagania[ranga[id]] && wymagania[ranga[id]]!=-999)
 			ranga[id]++
 		
 		sync = CreateHudSyncObj()
@@ -156,13 +148,13 @@ public rank(id) {
 				ShowSyncHudMsg(id, sync, "Zycie: %i^tInfekcje: %i (+%i HP)", get_user_health(id), get_user_infections(id), (get_user_infections(id)/hpdiv));
 			}
 			else {
-				set_hudmessage(250 , 100 , 0, -1.0, 0.90, _, TASK_REFRESHRATE+0.1, TASK_REFRESHRATE+0.1)
-				ShowSyncHudMsg(id, sync, "Ranga: %s^n Zabojstwa: [%d/%d] K/D: %.2f", nazwa[ranga[id]], stats[0], wymagania[ranga[id]], get_user_kdratio(id));
+				set_hudmessage(250 , 100 , 0, 0.03, 0.93, _, TASK_REFRESHRATE+0.1, TASK_REFRESHRATE+0.1)
+				ShowSyncHudMsg(id, sync, "Ranga: %s^t Zabojstwa: %d/%d", nazwa[ranga[id]], get_user_kills(id), wymagania[ranga[id]]);
 			}
 		}
 		else if(target) {
 			set_hudmessage(162, 101, 31, 0.65, -1.0, _, TASK_REFRESHRATE+0.1, TASK_REFRESHRATE+0.1)
-			ShowSyncHudMsg(id, sync, "%s | %s (%i HP)^nZabójstwa: %d/%d^nInfekcje: %i (+%i HP)^nPozycja w rankingu: %i", nazwa[ranga[target]], name, get_user_health(target), stats[0], wymagania[ranga[target]], get_user_infections(target), (get_user_infections(target)/hpdiv), iRankPos);
+			ShowSyncHudMsg(id, sync, "Nick: %s (%i HP)^nZabójstwa: %d/%d (%s)^nInfekcje: %i (+%i HP)^nPozycja w rankingu: %i", name, get_user_health(target), get_user_kills(target), wymagania[ranga[target]], nazwa[ranga[target]], get_user_infections(target), (get_user_infections(target)/hpdiv), iRankPos);
 		}
 	}
 }

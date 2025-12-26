@@ -9,18 +9,14 @@
 
 static const GameNames[][] =
 {
-	"Respawn na wejsciu",
-	"Sklep pod M",
-	"Mapcykl [Dzien-Noc]",
-    "Tryb Deathmatch w nocy",
-    "biohazard.gameclan.pl"
+	"Web: csbiohazard.vercel.app",
+    "13 HAVE FUN 37"
 };
 
 static const Float:Interval = 60.0;
 static const AllowRepeat = false;
 
 new current_name_id;
-new g_map[3];
 
 public plugin_init()
 {
@@ -29,21 +25,6 @@ public plugin_init()
     set_task(Interval, "change_game_name", .flags = "b");
 
     register_forward(FM_GetGameDescription, "update_game_name");
-
-    if(equali(g_map, "zm", 2))
-	{
-		formatex(g_tag, charsmax(g_tag), "Zombie Biohazard")
-	}
-	else if(equali(g_map, "ze", 2))
-	{
-		formatex(g_tag, charsmax(g_tag), "Zombie Escape")
-	}
-	else
-	{
-		formatex(g_tag, charsmax(g_tag), "Zombie Deathmatch")
-	}
-
-
 }
 
 public change_game_name()

@@ -3,6 +3,7 @@
 #include <cstrike>
 #include <colorchat>
 #include <fakemeta>
+#include <hamsandwich>
 #include <biohazard>
 
 #define PLUGIN "Biohazard Shop"
@@ -37,9 +38,11 @@ enum ITEM_TYPE {
 }
 
 new const g_hardscream[] = "zombie/dupa_activated.wav";
+new const g_silverhaze[] = "zombie/naboje.wav"
 
 new g_iBlinkAcct, gmsgNVGToggle, maxplayers;
 new g_hasConsumed[33][ITEM_TYPE];
+new g_bPower[33];
 new g_iDiscount[33];
 new bool: unAmmo[33], bool:g_bNotified[33] = false;
 new sprPlus;
@@ -72,6 +75,7 @@ new g_szItemsCT[][] =
     "Podpalacz",
     "Flara",
     "Noktowizor",
+    "Srebrne Naboje",
     "Autokampa",
     "Unlimited Ammo [VIP]"
 }
@@ -80,9 +84,10 @@ new g_iItemsPricesCT[] =
 {
     5000, 
     5500, 
-    7500,
+    6000,
     500,
-    2000,
+    1000,
+    10000,
     14000,
     16000   
 }
@@ -117,12 +122,20 @@ public plugin_init() {
 
     register_clcmd("chooseteam", "cmdShopDirect");
 
+    RegisterHam(Ham_TraceAttack, "player", "TraceAttack", 1)
+    RegisterHam(Ham_TakeDamage, "player", "bacon_takedamage_player")
 }
 
 public plugin_precache()
 {
     precache_sound(g_hardscream);
+    precache_sound(g_silverhaze);
     sprPlus = precache_model("sprites/heal.spr");
+}
+
+public plugin_natives()
+{
+	register_native("give_user_silverbullet", "native_give_user_silverbullet", 1)
 }
 
 public round_start() {
@@ -130,6 +143,7 @@ public round_start() {
             g_hasConsumed[i][HP] = 0;
             g_hasConsumed[i][RESP] = 0;
             unAmmo[i] = false;
+            g_bPower[i] = false;
     }
 }
 
@@ -301,7 +315,7 @@ public handler_ShopMenuTT(id, menu, item)
                 {
                     MustMeetRequirements( id );
                 } 
-                set_user_kbimmunity(id, 1.0, true)
+                set_user_kbimmunity(id, 1.0, false)
                 give_user_effects(id)
                 set_task(5.0, "cease_full_effect", id)
 
@@ -312,7 +326,6 @@ public handler_ShopMenuTT(id, menu, item)
         case 4:
         {
                 get_user_zombiemadness(id)
-                set_user_kbimmunity(id, 1.0, false)
 
                 set_task(5.0, "cease_full_effect", id)
 
@@ -443,6 +456,15 @@ public handler_ShopMenuCT(id, menu, item)
 
         case 5:
         {
+            g_bPower[id] = true;
+
+            give_user_silvertint(id);
+
+            set_task(5.0, "remove_powers", id)
+        }
+
+        case 6:
+        {
             
             switch(random(2))
 			{
@@ -455,7 +477,7 @@ public handler_ShopMenuCT(id, menu, item)
             cs_set_user_money(id, new_money);
         }
 
-        case 6:
+        case 7:
         {
             if(!is_vip(id))
             {
@@ -492,6 +514,42 @@ public cease_lesser_effect(id)
 public cease_full_effect(id)
 {
     set_user_kbimmunity(id, 0.0, false)
+}
+
+public give_user_silvertint(id)
+{
+    new iOrigin[3];
+
+    get_user_origin(id, iOrigin, 1)
+
+    emit_sound( id, CHAN_VOICE, g_silverhaze, 1.0, ATTN_NORM, 0, PITCH_NORM )
+
+    message_begin(MSG_PVS, SVC_TEMPENTITY, iOrigin)
+    write_byte(TE_IMPLOSION) // TEMP id
+    write_coord(iOrigin[0]) // x
+    write_coord(iOrigin[1]) // y
+    write_coord(iOrigin[2]) // z
+    write_byte(128) // radius
+    write_byte(20) // count
+    write_byte(6) // duration
+    message_end()
+
+    message_begin(MSG_PVS, SVC_TEMPENTITY, iOrigin)
+    write_byte(TE_DLIGHT) // TE id
+    write_coord(iOrigin[0]) // x
+    write_coord(iOrigin[1]) // y
+    write_coord(iOrigin[2]) // z
+    write_byte(16) // radius
+    write_byte(64) // r
+    write_byte(64) // g
+    write_byte(64) // b
+    write_byte(36) // life
+    write_byte(0) // decay rate
+    message_end()
+}
+public remove_powers(id)
+{
+    g_bPower[id] = false;
 }
 
 public give_user_effects(id)
@@ -588,6 +646,51 @@ public check_prerequisities(id)
 	
 	return true;
 }
+
+public TraceAttack(iEnt, iAttacker, Float:flDamage, Float:fDir[3], ptr, iDamageType) {
+    if(is_user_zombie(iAttacker) || !g_bPower[iAttacker] )
+	{
+		return
+	}
+
+    new iWeapon = get_user_weapon(iAttacker)
+    if( iWeapon == CSW_KNIFE )
+    {
+    	return
+    }
+
+    new iOrigin[3], Float:flEnd[3]
+
+    get_user_origin(iAttacker, iOrigin, 1)
+    get_tr2(ptr, TR_vecEndPos, flEnd)
+
+    message_begin(MSG_BROADCAST, SVC_TEMPENTITY)
+    write_byte(TE_TRACER)
+    write_coord(iOrigin[0])
+    write_coord(iOrigin[1])
+    write_coord(iOrigin[2])
+    write_coord_f(flEnd[0]) 
+    write_coord_f(flEnd[1]) 
+    write_coord_f(flEnd[2]) 
+    message_end()
+}
+
+public bacon_takedamage_player(victim, inflictor, attacker, Float:damage, damagetype)
+{
+    if(!is_user_zombie(victim))
+        return HAM_IGNORED;
+
+    if(g_bPower[attacker])
+        SetHamParamFloat(4, damage*3)
+
+    set_dhudmessage(152, 10, 10, -1.0, 0.6, 2, 0.1, 4.0, 0.02, 0.02)
+    show_dhudmessage(attacker, "[-%i HP]", floatround(damage))
+
+    return HAM_IGNORED;
+}
+
+public native_give_user_silverbullet(index)
+	return g_bPower[index];
 
 stock set_user_human(id)
 {

@@ -6,13 +6,13 @@
 #include <unixtime>
 #include <ColorChat>
 
-#define USING_TIMEZONE UT_TIMEZONE_UTC // for compatibility plugin and mysql timestamp
+#tryinclude "creds.cfg"
+
+#define USING_TIMEZONE UT_TIMEZONE_UTC // for compatibility plugin and mysql timestampp
 
 // uncomment if mysql should delete all expired entries (else will be removed only on player connection/unmute)
 //#define MYSQL_FORCE_CLEAR
 
-new pHost, pUser, pPass, pDatabase;
-new szHost[64], szUser[64], szPass[64], szDatabase[64];
 new Handle:hTuple;
 
 // uncomment if hltv should hear all players
@@ -24,7 +24,7 @@ new const mute_flag = ADMIN_CHAT;
 
 new const menu_times[] = { 2, 5, 10, 30, 60, 180, 720, 1440, 4320, 0 };
 
-new const alive_hear = 2; // 0 - zywi slysza wszystkich, 1 - zywi slysza zywych, 2 - zywi slysza team
+new const alive_hear = 2; // 0 - zywi slysza wszystkich, 1 - zywi slysza zywych, 2 - zywi slysza teama
 
 enum _mute { _time, _flags[4] };
 new mute[33][_mute];
@@ -32,6 +32,15 @@ new bool:muted[33][33];
 
 new selected[33][3];
 new bool:bAdminVoice[33];
+
+new cvar_sqlHost,
+	cvar_sqlUser,
+	cvar_sqlPass,
+	cvar_sqlDatabase,
+	v_Host[64],
+	v_User[33],
+	v_Pass[64],
+	v_Database[33];
 
 public plugin_precache()
 {
@@ -60,11 +69,11 @@ public plugin_init()
 	register_forward(FM_Sys_Error, "GameShutdown");
 	register_forward(FM_GameShutdown, "GameShutdown");
 	register_forward(FM_ServerDeactivate, "GameShutdown");
-	
-	pHost = register_cvar("mute_sql_host", "sql.pukawka.pl"); 
-	pUser = register_cvar("mute_sql_user", "898035"); 
-	pPass = register_cvar("mute_sql_pass", "zmKOLOSEUM");
-	pDatabase = register_cvar("mute_sql_database", "898035_cmanager");
+
+	cvar_sqlHost = register_cvar("sql_host", fmt("%s", g_pHost))
+	cvar_sqlUser = register_cvar("sql_user", fmt("%s", g_pUser))
+	cvar_sqlPass = register_cvar("sql_pass", fmt("%s", g_pPass))
+	cvar_sqlDatabase = register_cvar("sql_database", fmt("%s", g_pDatabase))
 	
 	server_exec();
 	set_task(0.1, "sql_init");
@@ -79,12 +88,12 @@ public plugin_cfg()
 
 public sql_init()
 {
-	get_pcvar_string(pHost, szHost, charsmax(szHost));
-	get_pcvar_string(pUser, szUser, charsmax(szUser));
-	get_pcvar_string(pPass, szPass, charsmax(szPass));
-	get_pcvar_string(pDatabase, szDatabase, charsmax(szDatabase));
-	
-	hTuple = SQL_MakeDbTuple(szHost, szUser, szPass, szDatabase);
+	get_pcvar_string(cvar_sqlHost, v_Host, charsmax(v_Host))
+	get_pcvar_string(cvar_sqlUser, v_User, charsmax(v_User))
+	get_pcvar_string(cvar_sqlPass, v_Pass, charsmax(v_Pass))
+	get_pcvar_string(cvar_sqlDatabase, v_Database, charsmax(v_Database))
+
+	hTuple = SQL_MakeDbTuple( v_Host, v_User, v_Pass, v_Database );
 	
 	new qCommand[512];
 	formatex(qCommand, charsmax(qCommand), "CREATE TABLE IF NOT EXISTS `mute` (`nick` VARCHAR(64), `authid` VARCHAR(35) NOT NULL,\

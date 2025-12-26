@@ -33,7 +33,7 @@ public TeleportMenu(id)
 {
     new iMenu = menu_create(fmt("\yTeleportuj"), "TeleMenuHandler")
 
-    new maxplayers = get_maxplayers(); // ile osob moze byc maksymalnie na serwerze
+    new maxplayers = get_maxplayers(); // ile osob moze byc maksymalnie na tym
     new name[64] // zmienna przechowujaca nick gracza
     new data[6] // to bedzie ID gracza, ktore wysylamy w info :)
     new itembuffer[64]

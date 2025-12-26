@@ -20,7 +20,6 @@ public plugin_init()
 {
 	register_plugin("GoSpec", PLUGIN_VERSION, "OciXCrom")
 	register_cvar("@CRXGoSpec", PLUGIN_VERSION, FCVAR_SERVER|FCVAR_SPONLY|FCVAR_UNLOGGED)
-	register_dictionary("GoSpec.txt")
 	
 	register_clcmd("say /spec", "GoSpec")
 	register_clcmd("say /back", "GoBack")

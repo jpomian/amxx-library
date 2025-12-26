@@ -509,7 +509,7 @@ stock set_user_human(id)
 {
 	cure_user(id)
 	
-	/* Remove user Nvgs */
+	/* Remove user Nvg */
 	Remove_User_Nvgs(id)
 	
 	/* Set user health to 100 */

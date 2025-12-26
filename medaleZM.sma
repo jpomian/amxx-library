@@ -29,11 +29,11 @@ public plugin_init() {
 	
 	register_clcmd("say /medale", "MenuMedali");
 		
-	gCvary[HOST] 	= register_cvar("medale_hostname", 	"sql.pukawka.pl");
-	gCvary[PASS] 	= register_cvar("medale_password", 	"zmKOLOSEUM");
-	gCvary[USER] 	= register_cvar("medale_username", 	"898035");
-	gCvary[DBNAME] 	= register_cvar("medale_dbname", 	"898035_medale");
-	gCvary[MIMPLR]	= register_cvar("medale_minp", 		"1");
+	gCvary[HOST] 	= register_cvar("medale_hostname", 	"145.239.236.240");
+	gCvary[PASS] 	= register_cvar("medale_password", 	"0exEhQWIfo8qbrfg");
+	gCvary[USER] 	= register_cvar("medale_username", 	"srv81841");
+	gCvary[DBNAME] 	= register_cvar("medale_sql_dbname", "srv81841");
+	gCvary[MIMPLR]	= register_cvar("medale_minp", "4");
 	
 	new temp[staty][64];
 	
@@ -71,7 +71,7 @@ public plugin_init() {
 	
 	WczytajMedale();
 }
-
+// putin
 public client_putinserver(id) {
 	Wyczysc(id);		
 	get_user_name(id, gNick[id], 32);

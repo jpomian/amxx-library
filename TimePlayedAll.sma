@@ -5,6 +5,8 @@
 #include <fakemeta>
 #include <cromchat>
 
+#tryinclude "creds.cfg"
+
 new const Version[ ] = "1.1.2";
 
 #if !defined client_disconnected
@@ -35,12 +37,17 @@ const MAX_QUERY_LENGTH = 256;
 const MAX_TIME_LENGTH = 22;
 const TASK_TIME_PLAYED = 969969;
 
-new const SQL_HOST[ ] = "sql.pukawka.pl"
-new const SQL_USER[ ] = "898035"
-new const SQL_PASS[ ] = "zmKOLOSEUM"
-new const SQL_DATABASE[ ] = "898035_czasy"
-new const SQL_TABLE[ ] = "TimePlayed"
-new const NVAULT_DATABASE[ ] = "TimePlayed"
+new const SQL_TABLE[ ] = "sql_times"
+new const NVAULT_DATABASE[ ] = "nv_times"
+
+new cvar_sqlHost,
+	cvar_sqlUser,
+	cvar_sqlPass,
+	cvar_sqlDatabase,
+	v_Host[64],
+	v_User[33],
+	v_Pass[64],
+	v_Database[33];
 
 enum DataTypes
 {
@@ -86,11 +93,16 @@ public plugin_init( )
 {
 	register_plugin( "Time Played", Version, "Supremache" )
 	register_cvar( "TimePlayed", Version, FCVAR_SERVER | FCVAR_SPONLY | FCVAR_UNLOGGED )
-	CC_SetPrefix( "^4[Konkurs]" );
-	
+	CC_SetPrefix( "^4[Biohazard]" );
+
 	g_cSaveMethod = register_cvar( "tp_save_method", "1" ) // How to save player's preferences: 0 = nVault | 1 = MySQL | 2 = SQLite
 	// g_cSaveType = register_cvar( "tp_save_type", "2" ) // ; Savve player's data:  0 = Name | 1= IP | 2 = SteamID
 	
+	cvar_sqlHost = register_cvar("sql_host", fmt("%s", g_pHost))
+	cvar_sqlUser = register_cvar("sql_user", fmt("%s", g_pUser))
+	cvar_sqlPass = register_cvar("sql_pass", fmt("%s", g_pPass))
+	cvar_sqlDatabase = register_cvar("sql_database", fmt("%s", g_pDatabase))
+
 	register_event( "SayText", "OnSayText", "a", "2=#Cstrike_Name_Change" )
 	
 	switch( get_pcvar_num( g_cSaveMethod ) )
@@ -104,8 +116,13 @@ public plugin_init( )
 		{
 			if( get_pcvar_num( g_cSaveMethod ) == SQLite )
 				SQL_SetAffinity( "sqlite" );
+
+			get_pcvar_string(cvar_sqlHost, v_Host, charsmax(v_Host))
+			get_pcvar_string(cvar_sqlUser, v_User, charsmax(v_User))
+			get_pcvar_string(cvar_sqlPass, v_Pass, charsmax(v_Pass))
+			get_pcvar_string(cvar_sqlDatabase, v_Database, charsmax(v_Database))
 				
-			g_SQLTuple = SQL_MakeDbTuple( SQL_HOST, SQL_USER, SQL_PASS, SQL_DATABASE );
+			g_SQLTuple = SQL_MakeDbTuple( v_Host, v_User, v_Pass, v_Database );
 			    
 			new szQuery[ MAX_QUERY_LENGTH ], Handle:SQLConnection, iErrorCode;
 			SQLConnection = SQL_Connect( g_SQLTuple, iErrorCode, g_szSQLError, charsmax( g_szSQLError ) );
@@ -190,14 +207,14 @@ public client_disconnected( id )
 	static szMessage[ MAX_FMT_LENGTH ];
 	read_args( szMessage, charsmax( szMessage ) ); remove_quotes( szMessage );
 	
-	if( equal( szMessage, "/time" ) || equal( szMessage, "/ptime" ) )
+	if( equal( szMessage, "/time" ) || equal( szMessage, "/czas" ) )
 	{
 		CC_SendMessage( id, "Czas gry:^4 %s", get_time_length_ex( g_iPlayer[ id ][ Time_Played ] ) ) 
 	}
 	else if( equal( szMessage, "/toptime" ) )
 	{
 		new website[128];
-		formatex(website, charsmax(website), "http://biohazard.gameclan.pl/staty/czas.php");
+		formatex(website, charsmax(website), "http://csbiohazard.vercel.app");
 			
 		new motd[256];
 		formatex(motd, sizeof(motd) - 1,\

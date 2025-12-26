@@ -61,11 +61,11 @@ public plugin_cfg()
 	menu_additem(MapM, "Limit graczy na mape");
 	menu_additem(MapM, "Zanominuj^n^n")
 	menu_additem(MapM, "Powrot do glownego menu");
-	menu_additem(g_testmenu, "Sprawdz czas gry \d(Konkurs)^n");
-	TimeM = menu_create("TOP \r3\w czasu gry, zdobywa kapitalne nagrody!", "TimeHandler");
+	menu_additem(g_testmenu, "Sprawdz czas gry^n");
+	TimeM = menu_create("Sprawdź ile czasu spędziłeś na TOPOWYM Biohazardzie", "TimeHandler");
 	menu_additem(TimeM, "Sprawdz swój czas");
 	menu_additem(TimeM, "Lista czasów graczy online")
-	menu_additem(TimeM, "Najlepszy czas graczy \d[MOTD]^n^n");
+	menu_additem(TimeM, "Najlepszy czas graczy \d[w budowie]^n^n");
 	menu_additem(TimeM, "Powrót");
 	menu_additem(g_testmenu, "Lista rang");
 	menu_additem(g_testmenu, "Dolacz na nasz serwer \yDiscord\w!");
@@ -138,7 +138,7 @@ public VipHandler(id, menu, item){
 public MapHandler(id, menu, item){
 	switch(item){
 		case 0: cmdShowMapLimit(id)
-		case 1: cmdExecute(id, "say /mapy")
+		case 1: cmdExecute(id, "say zm_")
 		case 2: menu_display(id, g_testmenu)
 	}
 }
@@ -189,7 +189,7 @@ public cmdChooseTeam(id)
 public cmdShowMapLimit(id)
 {
 	new website[128];
-	formatex(website, charsmax(website), "http://biohazard.gameclan.pl/mapy-noc.html");
+	formatex(website, charsmax(website), "https://csbiohazard.vercel.app/mapcykl.html/");
         
 	new motd[256];
 	formatex(motd, sizeof(motd) - 1,\
@@ -213,7 +213,7 @@ public showDiscordLinkCmd(id)
 public showRangiCmd(id)
 {
 	new website[128];
-	formatex(website, charsmax(website), "http://biohazard.gameclan.pl/rangi.html");
+	formatex(website, charsmax(website), "https://csbiohazard.vercel.app/rangi.html");
         
 	new motd[256];
 	formatex(motd, sizeof(motd) - 1,\

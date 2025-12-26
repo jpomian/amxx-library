@@ -6,7 +6,6 @@ new Float:Timeout, DemoName[MAX_LENGTH];
 
 public plugin_init() {
 	register_plugin("Demo Recorder", "2.4.1", "F@nt0M");
-	register_dictionary("demo_recorder.txt");
 
 	bind_pcvar_float(create_cvar(
 		.name = "amx_demo_timeout",
@@ -17,7 +16,7 @@ public plugin_init() {
 
 	hook_cvar_change(create_cvar(
 		.name = "amx_demo_format",
-		.string = "ZMTV-%mapname%"
+		.string = "BIOHAZARD-%mapname%"
 	), "HookChangeFormat");
 }
 
@@ -48,27 +47,32 @@ public client_disconnected(id) {
 }
 
 public TaskStop(id) {
-	if (is_user_connected(id)) {
+	if (is_elligible(id)) {
 		client_cmd(id, "stop");
 		set_task(0.2, "TaskRecord", id);
 	}
 }
 
 public TaskRecord(const id) {
-	if (is_user_connected(id)) {
+	if (is_elligible(id)) {
 		client_cmd(id, "record ^"%s^"", DemoName);
 		set_task(5.0, "TaskMessage", id);
 	}
 }
 
-public TaskMessage(const id) {
-	if (is_user_connected(id)) {
-		new time[10], date[12];
+stock bool:is_steam(auth[]) {
 
-		get_time("%H:%M:%S", time, charsmax(time));
-		get_time("%d.%m.%Y", date, charsmax(date));
+	return bool:(contain(auth, "STEAM_0:0:") != -1 || contain(auth, "STEAM_0:1:") != -1);
 
-		client_print_color(id, print_team_default, "%l %l", "DR_TAG", "DR_DEMO", DemoName);
-		client_print_color(id, print_team_default, "%l %l", "DR_TAG", "DR_TIME", time, date);
-	}
+}
+
+stock bool:is_elligible(id)
+{
+	new sid[35];
+	get_user_authid(id, sid, charsmax(sid))
+
+	if(is_user_connected(id) && is_steam(sid))
+		return true;
+
+	return false;
 }

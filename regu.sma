@@ -2,7 +2,7 @@
 #include <amxmisc>
 #include <colorchat>
 
-#define BIO_WEB_LINK "biohazard.gameclan.pl"
+#define BIO_WEB_LINK "csbiohazard.vercel.app"
 
 new g_regType[33];
 
@@ -44,7 +44,7 @@ public regHandler(id, menu, item)
 	}
 
     ColorChat(id, GREEN, "[Regulamin]^x01 Jezeli okno MOTD nie pojawia sie, sprawdz Nasza oficjalna strone!")
-    ColorChat(id, GREEN, "[Link]^x01 Link: biohazard.gameclan.pl. Mozesz go skopiowac w swojej konsoli.") 
+    ColorChat(id, GREEN, "[Link]^x01 Link: csbiohazard.vercel.app. Mozesz go skopiowac w swojej konsoli.") 
     
     client_print(id, print_console, "*************************")
     client_print(id, print_console, "Link: %s", BIO_WEB_LINK)
@@ -142,9 +142,9 @@ public CmdMotd(client)
     new website[128], motd[256];
 
     switch(g_regType[client]){
-		case 1: formatex(website, charsmax(website), "http://biohazard.gameclan.pl/reg/ogolny.html");
-		case 2: formatex(website, charsmax(website), "http://biohazard.gameclan.pl/reg/ct.html");
-		case 3: formatex(website, charsmax(website), "http://biohazard.gameclan.pl/reg/zm.html");
+		case 1: formatex(website, charsmax(website), "https://csbiohazard.vercel.app/reg/ogolny.html");
+		case 2: formatex(website, charsmax(website), "https://csbiohazard.vercel.app/reg/ct.html");
+		case 3: formatex(website, charsmax(website), "https://csbiohazard.vercel.app/reg/zm.html");
 	}
 
     formatex(motd, sizeof(motd) - 1,\
